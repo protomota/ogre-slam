@@ -451,6 +451,476 @@ ros2 node info /odometry_node
 
 ---
 
+## Step-by-Step Testing Guide
+
+### Prerequisites Check
+
+**1. Verify packages are installed:**
+```bash
+cd ~/ros2_ws
+source install/setup.bash
+ros2 pkg list | grep -E "ogre_slam|ogre_teleop|rplidar"
+```
+
+Expected output:
+```
+ogre_slam
+ogre_teleop
+rplidar_ros
+```
+
+**2. Install SLAM dependencies:**
+```bash
+sudo apt update && sudo apt install -y \
+  ros-humble-slam-toolbox \
+  ros-humble-robot-localization \
+  ros-humble-nav2-map-server \
+  ros-humble-nav2-lifecycle-manager \
+  ros-humble-tf2-tools
+```
+
+**3. Verify installation:**
+```bash
+dpkg -l | grep -E "ros-humble-(slam-toolbox|robot-localization|nav2-map-server)"
+```
+
+### Test 1: Encoder Reading (Hardware Test)
+
+**Purpose:** Verify GPIO encoder reading works
+
+**Steps:**
+```bash
+cd ~/ros2_ws/src/ogre-slam
+python3 ogre_slam/encoder_reader.py
+```
+
+**Expected behavior:**
+- No GPIO errors
+- Rotating any wheel manually should show tick counts increasing
+- Press Ctrl+C to exit
+
+**Example output:**
+```
+Testing encoder reader...
+Rotate motor wheels to see encoder counts
+Press Ctrl+C to exit
+Ticks: M1=   0 M2=   0 M3=   0 M4=   0
+Ticks: M1=  12 M2=   0 M3=   0 M4=   0  # ← M1 wheel was rotated
+```
+
+**Troubleshooting:**
+- Permission denied → `sudo usermod -a -G gpio $USER` (then log out/in)
+- No ticks → Check encoder wiring and power
+
+### Test 2: Mecanum Odometry (Math Test)
+
+**Purpose:** Verify kinematics calculations are correct
+
+**Steps:**
+```bash
+cd ~/ros2_ws/src/ogre-slam
+python3 ogre_slam/mecanum_odometry.py
+```
+
+**Expected output:**
+```
+Testing Mecanum Odometry Kinematics
+==================================================
+Wheel radius: 0.05m
+Wheel base: 0.25m
+Track width: 0.30m
+...
+Test 1: Forward movement
+  Robot velocity: vx=0.157 m/s, vy=0.000 m/s, vtheta=0.000 rad/s
+  ✅ Tests complete!
+```
+
+**What it tests:**
+- Forward movement (all wheels same direction)
+- Strafe left (mecanum-specific)
+- Rotation (CCW)
+
+### Test 3: Robot Dimensions Configuration
+
+**Purpose:** Configure actual robot measurements (or use estimates)
+
+**For initial testing (use estimates):**
+```bash
+# Skip this step - use default estimates
+# Defaults: wheel_radius=0.05m, wheel_base=0.25m, track_width=0.30m
+```
+
+**For production (measure actual dimensions):**
+```bash
+cd ~/ros2_ws/src/ogre-slam
+nano config/odometry_params.yaml
+
+# Measure and update:
+# - wheel_radius: Distance from wheel axle to ground
+# - wheel_base: Distance between front and rear axles
+# - track_width: Distance between left and right wheels
+```
+
+After changes:
+```bash
+cd ~/ros2_ws
+colcon build --packages-select ogre_slam --symlink-install
+source install/setup.bash
+```
+
+### Test 4: Odometry Node (ROS2 Integration Test)
+
+**Purpose:** Verify odometry node publishes correctly
+
+**Terminal 1 - Launch odometry node:**
+```bash
+source ~/ros2_ws/install/setup.bash
+ros2 run ogre_slam odometry_node
+```
+
+**Expected output:**
+```
+[INFO] [odometry_node]: Initializing encoder reader...
+[INFO] [odometry_node]: ✅ Encoder reader initialized
+[INFO] [odometry_node]: Robot parameters:
+[INFO] [odometry_node]:   Wheel radius: 0.05m
+[INFO] [odometry_node]:   Wheel base: 0.25m
+[INFO] [odometry_node]:   Track width: 0.30m
+[INFO] [odometry_node]: ✅ Odometry node started (publish rate: 50 Hz)
+```
+
+**Terminal 2 - Check topics:**
+```bash
+source ~/ros2_ws/install/setup.bash
+
+# Check /odom topic
+ros2 topic echo /odom --once
+
+# Check encoder ticks
+ros2 topic echo /encoder_ticks
+
+# Check publish rate
+ros2 topic hz /odom
+```
+
+**Expected:**
+- `/odom` publishes at ~50 Hz
+- `/encoder_ticks` shows [0, 0, 0, 0] when stationary
+- Rotating wheels → ticks increase
+
+**Test TF transforms:**
+```bash
+# Check odom → base_link transform
+ros2 run tf2_ros tf2_echo odom base_link
+```
+
+**Stop test:** Press Ctrl+C in Terminal 1
+
+### Test 5: RPLIDAR (Sensor Test)
+
+**Purpose:** Verify LIDAR is working
+
+**Terminal 1 - Launch RPLIDAR:**
+```bash
+source ~/ros2_ws/install/setup.bash
+ros2 launch rplidar_ros rplidar_a1_launch.py
+```
+
+**Terminal 2 - Check scan data:**
+```bash
+source ~/ros2_ws/install/setup.bash
+
+# Check scan topic
+ros2 topic hz /scan
+
+# View scan data
+ros2 topic echo /scan --once
+```
+
+**Expected:**
+- Scan rate: ~5-6 Hz (RPLIDAR A1)
+- LIDAR should be spinning
+- No "Failed to get scan data" errors
+
+**Troubleshooting:**
+- Permission denied → `sudo chmod 777 /dev/ttyUSB0`
+- No device → Check USB connection
+- Wrong model → Change launch file (a2m7, a3, etc.)
+
+**Stop test:** Press Ctrl+C in Terminal 1
+
+### Test 6: Full SLAM System (Integration Test)
+
+**Purpose:** Test complete SLAM stack
+
+**Terminal 1 - Launch SLAM (no RViz for now):**
+```bash
+cd ~/ros2_ws/src/ogre-slam
+source ~/ros2_ws/install/setup.bash
+ros2 launch ogre_slam mapping.launch.py use_rviz:=false
+```
+
+**Wait for initialization** (~5-10 seconds)
+
+**Expected output:**
+```
+[INFO] [odometry_node]: ✅ Odometry node started
+[INFO] [rplidar_node]: RPLIDAR running
+[INFO] [slam_toolbox]: Message Filter subscribing to topics...
+[INFO] [lifecycle_manager_slam]: Activating slam_toolbox
+[INFO] [lifecycle_manager_slam]: Activating map_saver_server
+```
+
+**Terminal 2 - Verify all topics:**
+```bash
+source ~/ros2_ws/install/setup.bash
+
+# Check critical topics
+ros2 topic list | grep -E "odom|scan|map"
+
+# Check topic rates
+ros2 topic hz /odom        # Should be ~50 Hz
+ros2 topic hz /scan        # Should be ~5-6 Hz
+ros2 topic hz /map         # Should be ~0.5 Hz (every 2 seconds)
+```
+
+**Expected topics:**
+```
+/odom
+/odometry/filtered  (from EKF)
+/scan
+/map
+/encoder_ticks
+```
+
+**Terminal 3 - Check TF tree:**
+```bash
+source ~/ros2_ws/install/setup.bash
+
+# Verify complete TF tree
+ros2 run tf2_ros tf2_echo map base_link
+
+# Generate TF tree diagram
+ros2 run tf2_tools view_frames
+# Creates frames.pdf - view with: xdg-open frames.pdf
+```
+
+**Expected TF chain:**
+```
+map → odom → base_link → laser
+```
+
+**Stop test:** Press Ctrl+C in Terminal 1
+
+### Test 7: SLAM with RViz (Visual Test)
+
+**Purpose:** See SLAM working visually
+
+**Launch with RViz:**
+```bash
+cd ~/ros2_ws/src/ogre-slam
+source ~/ros2_ws/install/setup.bash
+ros2 launch ogre_slam mapping.launch.py
+```
+
+**RViz should open showing:**
+- ✅ Grid (reference)
+- ✅ LaserScan (red dots from RPLIDAR)
+- ✅ Map (gray occupancy grid)
+- ✅ TF frames (colored axes)
+
+**In RViz:**
+1. Check Fixed Frame = `map` (top left, Global Options)
+2. LaserScan display should show red dots in a circle
+3. Map should show gray grid (empty at first)
+
+**If you don't see data:**
+- Check displays are enabled (checkbox)
+- Verify topics in display settings
+- Check Fixed Frame is correct
+
+**Stop test:** Press Ctrl+C in terminal
+
+### Test 8: Full Mapping Session (End-to-End Test)
+
+**Purpose:** Test complete workflow with manual driving
+
+**Terminal 1 - Launch unified system:**
+```bash
+cd ~/ros2_ws/src/ogre-slam
+./scripts/launch_mapping_session.sh
+```
+
+**Expected output:**
+```
+🚀 Project Ogre SLAM Mapping Session
+========================================
+
+📊 [1/2] Launching SLAM mapping system...
+  - RPLIDAR model: a1
+  - Odometry node (wheel encoders)
+  - robot_localization EKF
+  - slam_toolbox (async mapping)
+  - RViz visualization
+
+⏳ Waiting for SLAM system to initialize...
+   ✅ SLAM system ready (PID: XXXX)
+
+🎮 [2/2] Launching ogre_teleop (manual control)...
+   ✅ Teleop ready (PID: XXXX)
+
+========================================
+🎉 Mapping session ready!
+
+🌐 Web Interface:
+  http://10.21.21.45:8080
+```
+
+**Terminal 2 - Monitor topics:**
+```bash
+source ~/ros2_ws/install/setup.bash
+ros2 topic hz /odom /scan /map
+```
+
+**In Web Browser:**
+1. Open: `http://10.21.21.45:8080`
+2. Use WASD or arrow keys to drive
+3. Start with LOW speed (20-40%)
+4. Drive slowly in small area
+
+**In RViz:**
+- Watch LaserScan show obstacles
+- Watch Map fill in as you drive
+- Gray areas = mapped space
+- Black = obstacles
+- White = free space
+
+**Test movements:**
+1. Drive forward ~1 meter
+2. Rotate 90 degrees
+3. Drive forward again
+4. Return to start (loop closure)
+
+**You should see:**
+- ✅ Odometry position updating in /odom
+- ✅ Encoder ticks changing
+- ✅ LIDAR scan showing room
+- ✅ Map filling in gray/black/white
+- ✅ Robot pose tracked correctly
+
+### Test 9: Map Saving (Persistence Test)
+
+**After driving around:**
+
+**Terminal 3 - Save the map:**
+```bash
+source ~/ros2_ws/install/setup.bash
+cd ~/ros2_ws/src/ogre-slam/maps
+ros2 run nav2_map_server map_saver_cli -f test_map
+```
+
+**Expected output:**
+```
+[INFO] [map_saver]: Waiting for the map
+[INFO] [map_saver]: Received a 384 X 384 map @ 0.050 m/pix
+[INFO] [map_saver]: Writing map occupancy data to test_map.pgm
+[INFO] [map_saver]: Writing map metadata to test_map.yaml
+[INFO] [map_saver]: Map saved
+```
+
+**Verify files created:**
+```bash
+ls -lh ~/ros2_ws/src/ogre-slam/maps/
+# Should see:
+# test_map.yaml
+# test_map.pgm
+```
+
+**View the map:**
+```bash
+cd ~/ros2_ws/src/ogre-slam/maps
+eog test_map.pgm  # or use any image viewer
+```
+
+### Test 10: Shutdown Test
+
+**Graceful shutdown:**
+
+**In Terminal 1 (launch_mapping_session.sh):**
+- Press **Ctrl+C**
+
+**Expected:**
+```
+🛑 Shutting down mapping session...
+✅ All systems stopped
+```
+
+**Verify processes stopped:**
+```bash
+# Should return nothing
+ros2 node list
+```
+
+**Check logs for errors:**
+```bash
+tail -50 /tmp/ogre_slam_mapping.log
+tail -50 /tmp/ogre_teleop.log
+```
+
+## Test Results Checklist
+
+After completing all tests, verify:
+
+- [ ] ✅ Encoder reading works (Test 1)
+- [ ] ✅ Odometry math correct (Test 2)
+- [ ] ✅ Odometry node publishes /odom (Test 4)
+- [ ] ✅ RPLIDAR publishes /scan (Test 5)
+- [ ] ✅ SLAM system launches without errors (Test 6)
+- [ ] ✅ RViz shows laser and map (Test 7)
+- [ ] ✅ Can drive with teleop while mapping (Test 8)
+- [ ] ✅ Map saved successfully (Test 9)
+- [ ] ✅ Clean shutdown works (Test 10)
+
+## Common Test Failures & Solutions
+
+| Test | Failure | Solution |
+|------|---------|----------|
+| 1 | No encoder ticks | Check GPIO permissions, encoder wiring |
+| 4 | Odometry node crashes | Check encoder pins in code match hardware |
+| 5 | RPLIDAR permission denied | `sudo chmod 777 /dev/ttyUSB0` |
+| 6 | slam_toolbox fails | Verify all dependencies installed |
+| 7 | RViz crashes | Use `./launch_rviz.sh` from project-ogre |
+| 8 | Can't drive robot | Check ogre_teleop is working separately first |
+| 9 | Map save fails | Check /map topic is publishing |
+| 10 | Processes don't stop | `killall ros2` or reboot |
+
+## Performance Benchmarks
+
+Expected performance on Jetson Orin Nano:
+
+| Metric | Expected | Acceptable | Poor |
+|--------|----------|------------|------|
+| Odometry rate | 50 Hz | 40-50 Hz | <40 Hz |
+| LIDAR rate | 5.5 Hz | 5-6 Hz | <5 Hz |
+| Map update | 0.5 Hz | 0.3-0.5 Hz | <0.3 Hz |
+| CPU usage | 40-60% | 30-70% | >80% |
+| RAM usage | 1-2 GB | 1-3 GB | >4 GB |
+| Odometry drift | <10% | <20% | >30% |
+
+**Measure performance:**
+```bash
+# CPU/RAM
+tegrastats
+
+# Topic rates
+ros2 topic hz /odom /scan /map
+
+# TF latency
+ros2 run tf2_ros tf2_monitor
+```
+
+---
+
 **Implementation Date:** November 15, 2025
 **Implemented By:** Claude (Anthropic AI Assistant)
 **Platform:** Jetson Orin Nano Developer Kit
