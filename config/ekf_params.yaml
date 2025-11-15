@@ -1,0 +1,107 @@
+ekf_filter_node:
+  ros__parameters:
+    # The frequency, in Hz, at which the filter will output a position estimate
+    frequency: 50.0
+
+    # The period, in seconds, after which we consider a sensor to have timed out
+    sensor_timeout: 0.1
+
+    # EKF operates in 2D (mecanum robot on flat ground)
+    two_d_mode: true
+
+    # Frame configuration
+    odom_frame: odom
+    base_link_frame: base_link
+    world_frame: odom
+    publish_tf: true          # Publish odom → base_link transform
+    publish_acceleration: false
+
+    # Sensor inputs
+    # odom0 = wheel odometry from encoder-based odometry_node
+    odom0: /odom
+    odom0_config: [true,  true,  false,    # x, y, z position
+                   false, false, true,     # roll, pitch, yaw orientation
+                   true,  true,  false,    # vx, vy, vz linear velocity
+                   false, false, true,     # vroll, vpitch, vyaw angular velocity
+                   false, false, false]    # ax, ay, az linear acceleration
+
+    # Wheel odometry is absolute, not differential
+    odom0_differential: false
+    odom0_relative: false
+
+    # Higher values = trust sensor more (lower process noise)
+    # Lower values = trust sensor less (higher process noise)
+    # Queue size for odom measurements
+    odom0_queue_size: 10
+
+    # Rejection thresholds (Mahalanobis distance)
+    # Set higher for low-resolution encoders to prevent rejection
+    odom0_pose_rejection_threshold: 5.0
+    odom0_twist_rejection_threshold: 2.0
+
+    # Future: Add IMU for better yaw and angular velocity
+    # imu0: /imu/data
+    # imu0_config: [false, false, false,     # x, y, z position (IMU doesn't provide position)
+    #               false, false, true,      # roll, pitch, yaw (use IMU yaw)
+    #               false, false, false,     # vx, vy, vz (IMU doesn't provide linear velocity)
+    #               false, false, true,      # vroll, vpitch, vyaw (use IMU angular velocity)
+    #               true,  true,  false]     # ax, ay, az (use IMU linear acceleration)
+    # imu0_differential: false
+    # imu0_relative: false
+    # imu0_queue_size: 10
+    # imu0_pose_rejection_threshold: 0.8
+    # imu0_twist_rejection_threshold: 0.8
+    # imu0_linear_acceleration_rejection_threshold: 0.8
+    # imu0_remove_gravitational_acceleration: true
+
+    # Process noise covariance matrix Q
+    # Tuned for low-resolution encoders (2 PPR)
+    # Higher values = more uncertainty in prediction model
+    # Format: [x, y, z, roll, pitch, yaw, vx, vy, vz, vroll, vpitch, vyaw, ax, ay, az]
+    process_noise_covariance: [0.05, 0,    0,    0,    0,    0,    0,     0,     0,    0,    0,    0,    0,    0,    0,
+                               0,    0.05, 0,    0,    0,    0,    0,     0,     0,    0,    0,    0,    0,    0,    0,
+                               0,    0,    0.06, 0,    0,    0,    0,     0,     0,    0,    0,    0,    0,    0,    0,
+                               0,    0,    0,    0.03, 0,    0,    0,     0,     0,    0,    0,    0,    0,    0,    0,
+                               0,    0,    0,    0,    0.03, 0,    0,     0,     0,    0,    0,    0,    0,    0,    0,
+                               0,    0,    0,    0,    0,    0.06, 0,     0,     0,    0,    0,    0,    0,    0,    0,
+                               0,    0,    0,    0,    0,    0,    0.025, 0,     0,    0,    0,    0,    0,    0,    0,
+                               0,    0,    0,    0,    0,    0,    0,     0.025, 0,    0,    0,    0,    0,    0,    0,
+                               0,    0,    0,    0,    0,    0,    0,     0,     0.04, 0,    0,    0,    0,    0,    0,
+                               0,    0,    0,    0,    0,    0,    0,     0,     0,    0.01, 0,    0,    0,    0,    0,
+                               0,    0,    0,    0,    0,    0,    0,     0,     0,    0,    0.01, 0,    0,    0,    0,
+                               0,    0,    0,    0,    0,    0,    0,     0,     0,    0,    0,    0.02, 0,    0,    0,
+                               0,    0,    0,    0,    0,    0,    0,     0,     0,    0,    0,    0,    0.01, 0,    0,
+                               0,    0,    0,    0,    0,    0,    0,     0,     0,    0,    0,    0,    0,    0.01, 0,
+                               0,    0,    0,    0,    0,    0,    0,     0,     0,    0,    0,    0,    0,    0,    0.015]
+
+    # Initial state covariance (uncertainty in initial pose)
+    initial_estimate_covariance: [1e-9, 0,    0,    0,    0,    0,    0,    0,    0,    0,     0,     0,     0,    0,    0,
+                                  0,    1e-9, 0,    0,    0,    0,    0,    0,    0,    0,     0,     0,     0,    0,    0,
+                                  0,    0,    1e-9, 0,    0,    0,    0,    0,    0,    0,     0,     0,     0,    0,    0,
+                                  0,    0,    0,    1e-9, 0,    0,    0,    0,    0,    0,     0,     0,     0,    0,    0,
+                                  0,    0,    0,    0,    1e-9, 0,    0,    0,    0,    0,     0,     0,     0,    0,    0,
+                                  0,    0,    0,    0,    0,    1e-9, 0,    0,    0,    0,     0,     0,     0,    0,    0,
+                                  0,    0,    0,    0,    0,    0,    1e-9, 0,    0,    0,     0,     0,     0,    0,    0,
+                                  0,    0,    0,    0,    0,    0,    0,    1e-9, 0,    0,     0,     0,     0,    0,    0,
+                                  0,    0,    0,    0,    0,    0,    0,    0,    1e-9, 0,     0,     0,     0,    0,    0,
+                                  0,    0,    0,    0,    0,    0,    0,    0,    0,    1e-9,  0,     0,     0,    0,    0,
+                                  0,    0,    0,    0,    0,    0,    0,    0,    0,    0,     1e-9,  0,     0,    0,    0,
+                                  0,    0,    0,    0,    0,    0,    0,    0,    0,    0,     0,     1e-9,  0,    0,    0,
+                                  0,    0,    0,    0,    0,    0,    0,    0,    0,    0,     0,     0,     1e-9, 0,    0,
+                                  0,    0,    0,    0,    0,    0,    0,    0,    0,    0,     0,     0,     0,    1e-9, 0,
+                                  0,    0,    0,    0,    0,    0,    0,    0,    0,    0,     0,     0,     0,    0,    1e-9]
+
+# TUNING NOTES:
+#
+# If robot position drifts too much:
+# - Increase process_noise_covariance values (trust sensors more)
+# - Add IMU for better yaw estimation
+#
+# If odometry is too jerky:
+# - Decrease process_noise_covariance values (smooth more)
+# - Increase odom0_pose_rejection_threshold
+#
+# With 2 PPR encoders:
+# - Expect significant noise and drift
+# - robot_localization helps smooth this out
+# - IMU highly recommended for production use

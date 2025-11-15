@@ -1,0 +1,1 @@
+# ogre_slam package
