@@ -115,7 +115,16 @@ def generate_launch_description():
         emulate_tty=True
     )
 
-    # 7. RViz
+    # 7. Static transform: base_link → laser (LIDAR position on robot)
+    # LIDAR is mounted at center of robot, 270mm above ground
+    static_tf_laser = Node(
+        package='tf2_ros',
+        executable='static_transform_publisher',
+        name='base_to_laser_broadcaster',
+        arguments=['0.0', '0.0', '0.27', '0.0', '0.0', '0.0', 'base_link', 'laser']
+    )
+
+    # 8. RViz
     rviz_node = Node(
         package='rviz2',
         executable='rviz2',
@@ -138,6 +147,7 @@ def generate_launch_description():
         rplidar_launch,
         odometry_node,
         ekf_node,
+        static_tf_laser,
         slam_toolbox_node,
         map_saver_server,
         lifecycle_manager,
