@@ -10,9 +10,9 @@ slam_toolbox:
     ceres_loss_function: None
 
     # ROS Parameters
-    # NOTE: odom_frame set to base_link for odometry-free SLAM (no wheel encoders)
-    # This makes SLAM publish map→base_link directly via scan-matching only
-    odom_frame: base_link
+    # NOTE: Using odom frame even without wheel odometry
+    # SLAM publishes map→odom transform, static identity used for odom→base_link
+    odom_frame: odom
     map_frame: map
     base_frame: base_link
     scan_topic: /scan

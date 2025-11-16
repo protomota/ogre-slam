@@ -132,7 +132,16 @@ def generate_launch_description():
         emulate_tty=True
     )
 
-    # 7. Static transform: base_link → laser (LIDAR position on robot)
+    # 7. Static transform: odom → base_link (identity, no wheel odometry)
+    # For odometry-free SLAM: static identity transform since we have no encoders
+    static_tf_odom = Node(
+        package='tf2_ros',
+        executable='static_transform_publisher',
+        name='odom_to_base_broadcaster',
+        arguments=['0', '0', '0', '0', '0', '0', 'odom', 'base_link']
+    )
+
+    # 8. Static transform: base_link → laser (LIDAR position on robot)
     # LIDAR is mounted at center of robot, 270mm above ground, rotated 180° (inverted)
     static_tf_laser = Node(
         package='tf2_ros',
@@ -174,6 +183,7 @@ def generate_launch_description():
         rplidar_launch,
         odometry_node,        # Conditional - disabled by default (GPIO conflict)
         ekf_node,             # Conditional - disabled by default (no odometry)
+        static_tf_odom,       # Identity transform for odometry-free SLAM
         static_tf_laser,
         slam_toolbox_node,
         map_saver_server,
