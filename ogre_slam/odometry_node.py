@@ -61,6 +61,7 @@ class OdometryNode(Node):
         self.declare_parameter('encoder_ppr', 2)      # pulses per revolution
         self.declare_parameter('gear_ratio', 1.0)
         self.declare_parameter('publish_rate', 50.0)  # Hz
+        self.declare_parameter('publish_tf', False)   # Set to True to publish odom->base_link TF
         self.declare_parameter('odom_frame', 'odom')
         self.declare_parameter('base_frame', 'base_link')
 
@@ -77,6 +78,7 @@ class OdometryNode(Node):
         encoder_ppr = self.get_parameter('encoder_ppr').value
         gear_ratio = self.get_parameter('gear_ratio').value
         publish_rate = self.get_parameter('publish_rate').value
+        self.publish_tf = self.get_parameter('publish_tf').value
         self.odom_frame = self.get_parameter('odom_frame').value
         self.base_frame = self.get_parameter('base_frame').value
 
@@ -177,18 +179,19 @@ class OdometryNode(Node):
 
         self.odom_pub.publish(odom_msg)
 
-        # Publish TF transform
-        tf_msg = TransformStamped()
-        tf_msg.header.stamp = current_time.to_msg()
-        tf_msg.header.frame_id = self.odom_frame
-        tf_msg.child_frame_id = self.base_frame
+        # Publish TF transform (only if enabled - disabled for pure scan-matching SLAM)
+        if self.publish_tf:
+            tf_msg = TransformStamped()
+            tf_msg.header.stamp = current_time.to_msg()
+            tf_msg.header.frame_id = self.odom_frame
+            tf_msg.child_frame_id = self.base_frame
 
-        tf_msg.transform.translation.x = x
-        tf_msg.transform.translation.y = y
-        tf_msg.transform.translation.z = 0.0
-        tf_msg.transform.rotation = euler_to_quaternion(0.0, 0.0, theta)
+            tf_msg.transform.translation.x = x
+            tf_msg.transform.translation.y = y
+            tf_msg.transform.translation.z = 0.0
+            tf_msg.transform.rotation = euler_to_quaternion(0.0, 0.0, theta)
 
-        self.tf_broadcaster.sendTransform(tf_msg)
+            self.tf_broadcaster.sendTransform(tf_msg)
 
     def destroy_node(self):
         """Cleanup when node is destroyed"""
