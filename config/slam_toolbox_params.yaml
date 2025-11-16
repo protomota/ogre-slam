@@ -31,7 +31,7 @@ slam_toolbox:
     map_update_interval: 2.0        # Update map every 2 seconds (Jetson optimization)
     resolution: 0.05                # 5cm grid resolution (Jetson memory optimization)
     max_laser_range: 12.0           # RPLIDAR A1 max range
-    minimum_time_interval: 0.5      # Minimum time between scans for mapping
+    minimum_time_interval: 0.1      # Minimum time between scans (was 0.5, now 0.1 for faster updates)
     transform_timeout: 0.2
     tf_buffer_duration: 30.0
     stack_size_to_use: 40000000     # program needs a larger stack size to serialize large maps
@@ -39,8 +39,8 @@ slam_toolbox:
     # General Parameters
     use_scan_matching: true
     use_scan_barycenter: true
-    minimum_travel_distance: 0.01   # Meters - 1cm for scan-matching mode (was 0.1)
-    minimum_travel_heading: 0.01    # Radians - ~0.5° for scan-matching mode (was 0.1)
+    minimum_travel_distance: 0.001  # Meters - 1mm for maximum sensitivity (was 0.01)
+    minimum_travel_heading: 0.001   # Radians - ~0.06° for maximum sensitivity (was 0.01)
     scan_buffer_size: 10
     scan_buffer_maximum_scan_distance: 10.0
     link_match_minimum_response_fine: 0.1
