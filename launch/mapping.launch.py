@@ -125,12 +125,12 @@ def generate_launch_description():
     )
 
     # 7. Static transform: base_link → laser (LIDAR position on robot)
-    # LIDAR is mounted at center of robot, 270mm above ground
+    # LIDAR is mounted at center of robot, 270mm above ground, rotated 180° (inverted)
     static_tf_laser = Node(
         package='tf2_ros',
         executable='static_transform_publisher',
         name='base_to_laser_broadcaster',
-        arguments=['0.0', '0.0', '0.27', '0.0', '0.0', '0.0', 'base_link', 'laser']
+        arguments=['0.0', '0.0', '0.27', '0.0', '0.0', '3.14159', 'base_link', 'laser']
     )
 
     # 8. RViz
