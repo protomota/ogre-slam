@@ -14,7 +14,7 @@ odometry_node:
 
     # Publishing
     publish_rate: 50.0      # Odometry publish rate in Hz
-    publish_tf: true        # Enable TF - SLAM needs movement estimate to correct
+    publish_tf: false       # Disabled - SLAM publishes all TFs (prevents transform conflict)
 
     # Frame IDs
     odom_frame: 'odom'
