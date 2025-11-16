@@ -87,10 +87,13 @@ This launches:
 
 **In RViz:**
 
-1. **Set Initial Pose** (if robot position is wrong):
-   - Click "2D Pose Estimate" button
-   - Click and drag on map where robot actually is
-   - Arrow shows robot orientation
+1. **Set Initial Pose** (IMPORTANT - Do this first!):
+   - AMCL needs to know where the robot starts
+   - Click "2D Pose Estimate" button in RViz toolbar
+   - Click on the map where the robot actually is
+   - Drag to set the robot's orientation (arrow direction)
+   - You should see a green cloud of particles appear around the robot
+   - As the robot moves, particles will converge to the correct pose
 
 2. **Navigate to Goal**:
    - Click "Nav2 Goal" or "2D Goal Pose" button
@@ -135,10 +138,15 @@ This launches:
 ┌─────────────────────────────────────────────────────────┐
 │              Localization & Mapping                     │
 ├─────────────────────────────────────────────────────────┤
-│ slam_toolbox (Localization Mode):                      │
-│   - Loads pre-built map                                │
-│   - Localizes robot using RPLIDAR scans                │
+│ Map Server:                                             │
+│   - Loads and publishes pre-built map (.pgm/.yaml)    │
+│   - Provides static occupancy grid to Nav2             │
+│                                                         │
+│ AMCL (Adaptive Monte Carlo Localization):              │
+│   - Particle filter localization using laser scans    │
+│   - Estimates robot pose on the map                    │
 │   - Publishes map → odom transform                     │
+│   - Corrects position drift from odometry              │
 │                                                         │
 │ robot_localization EKF:                                 │
 │   - Fuses wheel odometry for smooth tracking           │

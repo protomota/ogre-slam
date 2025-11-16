@@ -1,0 +1,84 @@
+amcl:
+  ros__parameters:
+    use_sim_time: False
+
+    # Robot model parameters
+    robot_model_type: "nav2_amcl::DifferentialMotionModel"  # Use differential for mecanum
+
+    # Transform tolerance
+    transform_tolerance: 0.5  # Allow more tolerance for sensor fusion delays
+
+    # TF frames
+    global_frame_id: "map"
+    odom_frame_id: "odom"
+    base_frame_id: "base_link"
+
+    # Topics
+    scan_topic: "/scan"
+
+    # Particle filter parameters
+    # Higher particle count = better accuracy but more CPU
+    min_particles: 500
+    max_particles: 2000
+
+    # Recovery behavior
+    recovery_alpha_slow: 0.001
+    recovery_alpha_fast: 0.1
+
+    # Update rates
+    update_min_d: 0.1  # Minimum distance (m) to update filter
+    update_min_a: 0.2  # Minimum angle (rad) to update filter
+    resample_interval: 1  # Resample every update
+
+    # Laser model parameters (RPLIDAR A1)
+    laser_model_type: "likelihood_field"
+    laser_max_range: 12.0
+    laser_min_range: 0.15
+    max_beams: 60  # Subsample laser scans to reduce CPU (360/60 = every 6 degrees)
+
+    # Likelihood field model parameters
+    laser_likelihood_max_dist: 2.0
+    laser_sigma_hit: 0.2
+    laser_z_hit: 0.95
+    laser_z_rand: 0.05
+
+    # Initial pose parameters (set via RViz "2D Pose Estimate")
+    set_initial_pose: False
+    always_reset_initial_pose: False
+
+    # Initial pose covariance (uncertainty)
+    # Start with high uncertainty, will converge as robot moves
+    initial_pose:
+      x: 0.0
+      y: 0.0
+      z: 0.0
+      yaw: 0.0
+
+    # Initial covariance (standard deviation squared)
+    # Format: [x, y, z, roll, pitch, yaw]
+    # These are LARGE to allow AMCL to search widely
+    covariance:
+      x: 0.25    # ±0.5m uncertainty in x
+      y: 0.25    # ±0.5m uncertainty in y
+      yaw: 0.07  # ±0.26 rad (±15°) uncertainty in heading
+
+    # Motion model parameters (odom alpha parameters)
+    # These account for odometry noise
+    # Higher values = less trust in odometry, more reliance on laser
+    alpha1: 0.2  # Rotation noise from rotation
+    alpha2: 0.2  # Rotation noise from translation
+    alpha3: 0.2  # Translation noise from translation
+    alpha4: 0.2  # Translation noise from rotation
+    alpha5: 0.2  # Translation noise (strafe for omni-directional)
+
+    # Beam skipping parameters
+    do_beamskip: False
+    beam_skip_distance: 0.5
+    beam_skip_threshold: 0.3
+    beam_skip_error_threshold: 0.9
+
+    # Publication parameters
+    save_pose_rate: 2.0  # Hz - how often to publish estimated pose
+
+    # Map parameters
+    first_map_only: False  # Allow map updates
