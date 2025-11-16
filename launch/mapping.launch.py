@@ -46,8 +46,8 @@ def generate_launch_description():
 
     use_ekf_arg = DeclareLaunchArgument(
         'use_ekf',
-        default_value='false',
-        description='Use robot_localization EKF for sensor fusion (disabled for pure scan-matching)'
+        default_value='true',
+        description='Use robot_localization EKF for sensor fusion (publishes odom→base_link)'
     )
 
     use_teleop_arg = DeclareLaunchArgument(
