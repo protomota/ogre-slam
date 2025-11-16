@@ -37,8 +37,8 @@ slam_toolbox:
     # General Parameters
     use_scan_matching: true
     use_scan_barycenter: true
-    minimum_travel_distance: 0.5    # Meters - increased to prevent drift from noisy 2 PPR encoders
-    minimum_travel_heading: 0.5     # Radians - increased to prevent rotation drift
+    minimum_travel_distance: 0.1    # Meters - 10cm movement to update map (scan-matching filters noise)
+    minimum_travel_heading: 0.1     # Radians - ~6° rotation to update map
     scan_buffer_size: 10
     scan_buffer_maximum_scan_distance: 10.0
     link_match_minimum_response_fine: 0.1
