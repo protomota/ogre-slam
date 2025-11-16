@@ -46,8 +46,8 @@ def generate_launch_description():
 
     use_ekf_arg = DeclareLaunchArgument(
         'use_ekf',
-        default_value='false',
-        description='Use robot_localization EKF for sensor fusion (disable without odometry)'
+        default_value='true',
+        description='Use robot_localization EKF to publish odom→base_link (even without input)'
     )
 
     use_teleop_arg = DeclareLaunchArgument(
@@ -132,14 +132,9 @@ def generate_launch_description():
         emulate_tty=True
     )
 
-    # 7. Static transform: odom → base_link (identity, no wheel odometry)
-    # For odometry-free SLAM: static identity transform since we have no encoders
-    static_tf_odom = Node(
-        package='tf2_ros',
-        executable='static_transform_publisher',
-        name='odom_to_base_broadcaster',
-        arguments=['0', '0', '0', '0', '0', '0', 'odom', 'base_link']
-    )
+    # 7. NOTE: No static odom→base_link transform!
+    # SLAM toolbox will publish odom→base_link dynamically via scan-matching
+    # This allows the map to update as the robot moves
 
     # 8. Static transform: base_link → laser (LIDAR position on robot)
     # LIDAR is mounted at center of robot, 270mm above ground, rotated 180° (inverted)
@@ -183,7 +178,7 @@ def generate_launch_description():
         rplidar_launch,
         odometry_node,        # Conditional - disabled by default (GPIO conflict)
         ekf_node,             # Conditional - disabled by default (no odometry)
-        static_tf_odom,       # Identity transform for odometry-free SLAM
+        # No static odom transform - SLAM publishes odom→base_link dynamically
         static_tf_laser,
         slam_toolbox_node,
         map_saver_server,
