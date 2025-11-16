@@ -87,6 +87,7 @@ Already included from project-ogre:
    - `wheel_radius`: Distance from wheel axle to ground (meters)
    - `wheel_base`: Distance between front and rear axles (meters)
    - `track_width`: Distance between left and right wheels (meters)
+   - `gear_ratio`: Motor gear ratio (see Gear Ratio Calibration below)
 
 4. **Build package:**
    ```bash
@@ -174,15 +175,46 @@ ros2 launch ogre_teleop web_teleop.launch.py
 
 ## Configuration
 
+### Gear Ratio Calibration (CRITICAL!)
+
+The `gear_ratio` parameter is the most important value to calibrate for accurate odometry. Incorrect gear ratio causes massive position errors and prevents SLAM from working.
+
+**For 25GA-370 motors:** The calibrated gear_ratio is **224.0**
+
+**To calibrate for your specific motors:**
+
+1. Launch SLAM system and ensure odometry is publishing
+2. Mark the robot's starting position with tape
+3. Drive the robot forward **exactly 1.0 meter** in a straight line (use measuring tape)
+4. Check reported distance:
+   ```bash
+   ros2 topic echo /odom --once | grep -A 3 "position"
+   ```
+5. Calculate correction:
+   ```
+   new_gear_ratio = current_gear_ratio × (reported_x / actual_distance)
+   ```
+   Example: If reported x=4.483m with gear_ratio=50.0:
+   ```
+   new_gear_ratio = 50.0 × (4.483 / 1.0) = 224.0
+   ```
+6. Update `gear_ratio` in `config/odometry_params.yaml`
+7. Restart SLAM and test again until x ≈ 1.0m (±5cm tolerance)
+
+**Calibration results for this robot:**
+- Initial test with gear_ratio=50.0: reported 4.483m for 1.0m actual
+- Final gear_ratio=224.0: reported 1.008m for 1.0m actual (0.8% error) ✅
+
 ### Odometry Parameters
 
 Edit `config/odometry_params.yaml`:
 
 ```yaml
-wheel_radius: 0.05      # MEASURE THIS!
-wheel_base: 0.25        # MEASURE THIS!
-track_width: 0.30       # MEASURE THIS!
-encoder_ppr: 2          # Hall sensors: 2 PPR
+wheel_radius: 0.040     # Wheel radius in meters (MEASURED: 40mm)
+wheel_base: 0.095       # Front/rear axle distance (MEASURED: 95mm)
+track_width: 0.205      # Left/right wheel distance (MEASURED: 205mm)
+encoder_ppr: 2          # Hall sensors: 2 PPR (fixed)
+gear_ratio: 224.0       # Motor gear ratio (CALIBRATED for 25GA-370)
 publish_rate: 50.0      # Hz
 ```
 
@@ -193,8 +225,10 @@ Edit `config/slam_toolbox_params.yaml`:
 Key parameters:
 - `resolution: 0.05` - Map grid size (5cm)
 - `max_laser_range: 12.0` - RPLIDAR max range
-- `minimum_travel_distance: 0.2` - Don't map while stationary
-- `map_update_interval: 2.0` - Jetson optimization
+- `minimum_travel_distance: 0.0` - Process scans based on time only
+- `minimum_travel_heading: 0.0` - Process scans based on time only
+- `minimum_time_interval: 0.1` - Process scans every 0.1 seconds
+- `map_update_interval: 2.0` - Publish map every 2 seconds (Jetson optimization)
 
 ### EKF Sensor Fusion
 
@@ -257,6 +291,12 @@ map (from slam_toolbox)
 
 **Problem:** No /odom topic or encoder errors
 
+**Common Misconception:** "odometry_node conflicts with motor_control_node on GPIO"
+- **FALSE!** There is NO GPIO conflict
+- motor_control_node uses I2C (PCA9685) for PWM control
+- odometry_node uses GPIO pins (7,11,13,15,29,31,32,33) for encoders
+- Both can run simultaneously without issues
+
 **Solutions:**
 1. Check GPIO permissions:
    ```bash
@@ -264,7 +304,16 @@ map (from slam_toolbox)
    # Log out and back in
    ```
 
-2. Verify encoder connections:
+2. If you see "Device or resource busy" error:
+   - Previous instance didn't clean up GPIO
+   - Solution: Restart the Jetson or manually cleanup:
+   ```bash
+   # Kill all Python processes using GPIO
+   pkill -9 python3
+   # Wait a moment, then restart SLAM
+   ```
+
+3. Verify encoder connections:
    ```bash
    # Test encoder reader
    cd ~/ros2_ws/src/ogre-slam
@@ -272,36 +321,59 @@ map (from slam_toolbox)
    # Rotate wheels manually, should see counts
    ```
 
-3. Check logs:
+4. Check logs:
    ```bash
    ros2 topic echo /encoder_ticks
    # Should show non-zero values when wheels turn
    ```
 
-### SLAM Not Building Map
+### SLAM Not Building Map / Map Not Updating
 
-**Problem:** Map stays empty in RViz
+**Problem:** Map stays empty or frozen in RViz, doesn't update when robot moves
 
-**Checks:**
+**Root Cause:** This was a critical issue caused by incorrect gear_ratio and/or using dummy odometry that always reported (0,0,0). slam_toolbox requires meaningful odometry changes to trigger scan processing, even in scan-matching mode.
+
+**Solution:**
+1. **Use real encoder odometry** (NOT dummy odometry)
+   - Ensure `use_odometry: true` in launch file
+   - Verify `/odom` topic shows changing position when driving
+
+2. **Calibrate gear_ratio correctly** (see Gear Ratio Calibration section)
+   - Incorrect gear_ratio causes massive position errors
+   - SLAM won't process scans if odometry shows unrealistic movement
+   - For 25GA-370 motors: use gear_ratio=224.0
+
+3. **Set SLAM thresholds to 0.0** to process scans based on time only:
+   ```yaml
+   # In slam_toolbox_params.yaml
+   minimum_travel_distance: 0.0
+   minimum_travel_heading: 0.0
+   ```
+
+**Quick Checks:**
 1. **LIDAR working?**
    ```bash
    ros2 topic hz /scan
-   # Should show ~5-6 Hz for RPLIDAR A1
+   # Should show ~7-8 Hz for RPLIDAR A1
    ```
 
-2. **Robot moving?**
+2. **Odometry accurate?**
    ```bash
-   ros2 topic echo /odom
-   # Position should change when driving
+   ros2 topic echo /odom --once | grep -A 3 "position"
+   # Drive 1m forward, x should be ~1.0m (not 100m or 0.01m!)
    ```
 
 3. **TF tree complete?**
    ```bash
    ros2 run tf2_ros tf2_echo map base_link
-   # Should show transform
+   # Should show transform without errors
    ```
 
-4. **Drive faster:** Minimum travel distance is 0.2m
+4. **Map being published?**
+   ```bash
+   ros2 topic hz /map
+   # Should show ~0.5 Hz (updates every 2 seconds)
+   ```
 
 ### Map Quality Poor
 
