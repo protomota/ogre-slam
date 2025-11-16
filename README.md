@@ -130,6 +130,36 @@ This creates:
 # Press Ctrl+C in launch terminal
 ```
 
+### Remote Visualization
+
+**Visualize SLAM from another computer on the same network:**
+
+1. **On the robot:** Launch SLAM without RViz to save resources
+   ```bash
+   ros2 launch ogre_slam mapping.launch.py use_rviz:=false
+   ```
+
+2. **On remote computer:** Run the RViz launcher script
+   ```bash
+   cd ~/ros2_ws/src/ogre-slam
+   ./scripts/remote_launch_slam_rviz.sh
+   ```
+
+This will:
+- Check ROS2 connection to robot (10.21.21.45)
+- Set correct ROS_DOMAIN_ID (42)
+- Create pre-configured RViz setup with:
+  - LaserScan visualization (`/scan`)
+  - Map display (`/map`)
+  - TF frame visualization
+- Launch RViz with automatic display configuration
+
+**Requirements:**
+- Remote computer must have ROS2 Humble installed
+- Both computers on same network (10.21.21.x)
+- ROS_DOMAIN_ID=42 set on both machines
+- Network allows multicast or FastDDS peer discovery
+
 ### Manual Launch (Advanced)
 
 If you want more control, launch systems separately:
@@ -187,7 +217,8 @@ ogre-slam/
 │   ├── slam_toolbox_params.yaml # SLAM configuration
 │   └── ekf_params.yaml          # Sensor fusion config
 ├── scripts/
-│   └── launch_mapping_session.sh # Unified launcher
+│   ├── launch_mapping_session.sh    # Unified launcher (robot)
+│   └── remote_launch_slam_rviz.sh   # Remote RViz launcher
 ├── maps/                        # Saved maps directory
 ├── rviz/
 │   └── mapping.rviz            # RViz configuration
