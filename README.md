@@ -45,7 +45,9 @@ M3 (RL) --- M2 (RR)
 
 ## Dependencies
 
-### System Packages
+### System Packages (REQUIRED - Install First!)
+
+**⚠️ IMPORTANT:** Install these dependencies BEFORE building the package:
 
 ```bash
 sudo apt update
@@ -56,6 +58,8 @@ sudo apt install -y \
   ros-humble-nav2-lifecycle-manager \
   ros-humble-tf2-tools
 ```
+
+**Note:** If you see errors about `packages.ros.org/ros` repository, ignore them - we only need ROS2 packages which will install correctly.
 
 ### Python Dependencies
 
