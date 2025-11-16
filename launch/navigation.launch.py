@@ -30,13 +30,22 @@ from launch_ros.actions import Node
 from launch_ros.substitutions import FindPackageShare
 
 
-def generate_map_server_node(context, *args, **kwargs):
-    """Generate map server node with expanded map path."""
+def generate_localization_nodes(context, *args, **kwargs):
+    """Generate map server and slam_toolbox localization nodes with expanded map path."""
     map_path = LaunchConfiguration('map').perform(context)
     expanded_path = os.path.expanduser(map_path)
     expanded_path = os.path.expandvars(expanded_path)
 
-    return [Node(
+    # Extract map file name without extension for slam_toolbox
+    # e.g., /home/jetson/ros2_ws/src/ogre-slam/maps/my_map.yaml -> my_map
+    map_file_name = os.path.splitext(os.path.basename(expanded_path))[0]
+    map_dir = os.path.dirname(expanded_path)
+
+    # Get config directory
+    ogre_slam_dir = get_package_share_directory('ogre_slam')
+    slam_params_file = os.path.join(ogre_slam_dir, 'config', 'slam_toolbox_params.yaml')
+
+    map_server_node = Node(
         package='nav2_map_server',
         executable='map_server',
         name='map_server',
@@ -46,7 +55,25 @@ def generate_map_server_node(context, *args, **kwargs):
             'yaml_filename': expanded_path
         }],
         emulate_tty=True
-    )]
+    )
+
+    slam_toolbox_node = Node(
+        package='slam_toolbox',
+        executable='localization_slam_toolbox_node',
+        name='slam_toolbox',
+        output='screen',
+        parameters=[
+            slam_params_file,
+            {
+                'use_sim_time': False,
+                'map_file_name': os.path.join(map_dir, map_file_name),
+                'map_start_at_dock': False
+            }
+        ],
+        emulate_tty=True
+    )
+
+    return [map_server_node, slam_toolbox_node]
 
 
 def generate_launch_description():
@@ -182,21 +209,8 @@ def generate_launch_description():
         condition=IfCondition(use_ekf)
     )
 
-    # 7. slam_toolbox (LOCALIZATION MODE with saved map)
-    slam_toolbox_node = Node(
-        package='slam_toolbox',
-        executable='localization_slam_toolbox_node',  # LOCALIZATION, not async_slam
-        name='slam_toolbox',
-        output='screen',
-        parameters=[
-            slam_params_file,
-            {'use_sim_time': False}
-        ],
-        emulate_tty=True
-    )
-
-    # 8. Map server (loads saved map with path expansion)
-    map_server_launcher = OpaqueFunction(function=generate_map_server_node)
+    # 7-8. Map server + slam_toolbox localization (loads saved map with path expansion)
+    localization_launcher = OpaqueFunction(function=generate_localization_nodes)
 
     # 9. Nav2 Lifecycle Manager (activates Nav2 nodes)
     lifecycle_manager_navigation = Node(
@@ -332,10 +346,9 @@ def generate_launch_description():
         # Odometry and localization
         odometry_node,
         ekf_node,
-        slam_toolbox_node,
 
-        # Map server
-        map_server_launcher,
+        # Map server + SLAM localization (combined)
+        localization_launcher,
         lifecycle_manager_localization,
 
         # Nav2 stack
