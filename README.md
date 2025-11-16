@@ -4,28 +4,33 @@ SLAM mapping and autonomous navigation for Project Ogre mecanum drive robot.
 
 ## Overview
 
-This ROS2 package provides SLAM (Simultaneous Localization and Mapping) capabilities for the Project Ogre robot using:
-- **Wheel odometry** from 4 mecanum drive encoders (2 PPR Hall sensors)
-- **RPLIDAR** 2D laser scanner for mapping
+This ROS2 package provides SLAM (Simultaneous Localization and Mapping) and autonomous navigation capabilities for the Project Ogre robot using:
+- **Wheel odometry** from 4 mecanum drive encoders (2 PPR Hall sensors, calibrated gear_ratio: 224.0)
+- **RPLIDAR A1** 2D laser scanner for mapping and localization
+- **RealSense D435** depth camera for 3D obstacle avoidance
 - **slam_toolbox** for map building and localization
 - **robot_localization** EKF for sensor fusion
+- **Nav2** for autonomous waypoint navigation
 
 ## Features
 
-- ✅ Wheel encoder odometry with mecanum drive kinematics
+- ✅ Wheel encoder odometry with mecanum drive kinematics (±0.8% accuracy)
 - ✅ Async SLAM mapping optimized for Jetson Orin Nano
 - ✅ Sensor fusion (EKF) to handle low encoder resolution
-- ✅ Unified launcher for easy operation
 - ✅ Map saving/loading for autonomous navigation
-- ✅ RViz visualization
-- 🚧 Nav2 integration (future work)
+- ✅ **NEW:** Autonomous waypoint navigation with Nav2
+- ✅ **NEW:** 3D obstacle avoidance using RealSense D435 pointcloud
+- ✅ **NEW:** Mecanum-aware path planning (omnidirectional movement)
+- ✅ RViz visualization with Nav2 panel
+- ✅ Manual override via web teleop interface
 
 ## Hardware Requirements
 
 - **Jetson Orin Nano** Developer Kit
-- **Mecanum drive** robot with 4 motors
+- **Mecanum drive** robot with 4 motors (25GA-370 with gear_ratio 224.0)
 - **Encoders**: 2 PPR Hall sensors on each motor
-- **RPLIDAR** (A1/A2/A3 series)
+- **RPLIDAR** (A1/A2/A3 series) - 2D laser scanner
+- **RealSense D435** depth camera - 3D obstacle detection (NEW)
 - **GPIO access** for encoder reading
 
 ### Robot Configuration
@@ -97,6 +102,34 @@ Already included from project-ogre:
    ```
 
 ## Quick Start
+
+### Navigation Mode (Autonomous Waypoint Navigation) ⭐ NEW!
+
+**Prerequisites:**
+1. Install Nav2 packages (see NAV2_README.md)
+2. Have a saved map from mapping mode
+
+**Launch autonomous navigation:**
+```bash
+cd ~/ros2_ws && source install/setup.bash
+ros2 launch ogre_slam navigation.launch.py map:=~/ros2_ws/src/ogre-slam/maps/my_map.yaml
+```
+
+This launches:
+1. **Localization**: slam_toolbox with saved map
+2. **Sensors**: RPLIDAR + RealSense D435 pointcloud
+3. **Nav2 Stack**: Path planning, obstacle avoidance, controller
+4. **Control**: Web interface for manual override
+
+**Navigate to waypoints:**
+1. In RViz, click "2D Pose Estimate" and set robot's initial position
+2. Click "Nav2 Goal" button and click destination on map
+3. Robot autonomously navigates, avoiding obstacles with RealSense depth
+4. Manual override always available at `http://10.21.21.45:8080`
+
+**📖 Full documentation:** See [NAV2_README.md](NAV2_README.md) for complete guide
+
+---
 
 ### Mapping Mode (Build a Map)
 
