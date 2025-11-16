@@ -10,7 +10,7 @@ odometry_node:
 
     # Encoder configuration
     encoder_ppr: 2          # Pulses per revolution (Hall sensors: 2 PPR)
-    gear_ratio: 1.0         # Motor gear ratio (adjust if geared motors)
+    gear_ratio: 224.0       # Motor gear ratio (calibrated: 1m actual = 4.483m reported @ ratio 50)
 
     # Publishing
     publish_rate: 50.0      # Odometry publish rate in Hz
