@@ -91,15 +91,15 @@ def generate_launch_description():
 
     # 1. RPLIDAR launch (2D laser scanner)
     rplidar_launch = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource(
+        PythonLaunchDescriptionSource([
             PathJoinSubstitution([
                 FindPackageShare('rplidar_ros'),
-                'launch',
-                PathJoinSubstitution([
-                    '/rplidar_', rplidar_model, '_launch.py'
-                ])
-            ])
-        )
+                'launch'
+            ]),
+            '/rplidar_',
+            rplidar_model,
+            '_launch.py'
+        ])
     )
 
     # 2. RealSense D435 launch (3D depth camera with pointcloud)
