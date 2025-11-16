@@ -58,8 +58,8 @@ def generate_launch_description():
 
     use_odometry_arg = DeclareLaunchArgument(
         'use_odometry',
-        default_value='false',
-        description='Launch odometry node (WARNING: conflicts with motor_control GPIO - disable for now)'
+        default_value='true',
+        description='Launch encoder-based odometry node for accurate SLAM'
     )
 
     rplidar_model = LaunchConfiguration('rplidar_model')
@@ -76,7 +76,7 @@ def generate_launch_description():
         ])
     )
 
-    # 2a. Encoder-based odometry node (disabled by default - GPIO conflict)
+    # 2. Encoder-based odometry node
     odometry_node = Node(
         package='ogre_slam',
         executable='odometry_node',
@@ -85,16 +85,6 @@ def generate_launch_description():
         parameters=[odometry_params_file],
         emulate_tty=True,
         condition=IfCondition(use_odometry)
-    )
-
-    # 2b. Dummy odometry node (for scan-matching SLAM without encoders)
-    # Publishes zero-velocity /odom topic to satisfy SLAM requirements
-    dummy_odom_node = Node(
-        package='ogre_slam',
-        executable='dummy_odom_node',
-        name='dummy_odom_node',
-        output='screen',
-        emulate_tty=True
     )
 
     # 3. robot_localization EKF node (sensor fusion)
@@ -186,9 +176,8 @@ def generate_launch_description():
 
         # Nodes
         rplidar_launch,
-        odometry_node,        # Conditional - disabled by default (GPIO conflict)
-        dummy_odom_node,      # Dummy /odom topic for scan-matching SLAM
-        ekf_node,             # EKF publishes odom→base_link transform
+        odometry_node,        # Encoder-based odometry (enabled by default)
+        ekf_node,             # EKF fuses odometry for smooth odom→base_link transform
         static_tf_laser,
         slam_toolbox_node,
         map_saver_server,
