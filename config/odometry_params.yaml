@@ -1,9 +1,12 @@
 odometry_node:
   ros__parameters:
-    # Robot physical dimensions (MUST MEASURE THESE!)
-    wheel_radius: 0.05      # Wheel radius in meters (estimate: 5cm)
-    wheel_base: 0.25        # Distance between front/rear axles in meters (estimate: 25cm)
-    track_width: 0.30       # Distance between left/right wheels in meters (estimate: 30cm)
+    # Robot physical dimensions (MEASURED VALUES - Nov 15, 2025)
+    wheel_radius: 0.040     # Wheel radius in meters (40mm measured)
+    wheel_base: 0.095       # Distance between front/rear axles in meters (95mm measured)
+    track_width: 0.205      # Distance between left/right wheels in meters (205mm measured)
+
+    # Robot specifications
+    robot_weight_kg: 4.96   # 10 lb 15 oz (for future dynamics modeling)
 
     # Encoder configuration
     encoder_ppr: 2          # Pulses per revolution (Hall sensors: 2 PPR)
