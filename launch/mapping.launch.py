@@ -133,15 +133,6 @@ def generate_launch_description():
         arguments=['0.0', '0.0', '0.27', '0.0', '0.0', '0.0', 'base_link', 'laser']
     )
 
-    # 7b. Static identity transform: odom → base_link (for pure scan-matching)
-    # SLAM will publish map→odom with real localization, this just completes the TF tree
-    static_tf_odom = Node(
-        package='tf2_ros',
-        executable='static_transform_publisher',
-        name='odom_to_base_broadcaster',
-        arguments=['0.0', '0.0', '0.0', '0.0', '0.0', '0.0', 'odom', 'base_link']
-    )
-
     # 8. RViz
     rviz_node = Node(
         package='rviz2',
@@ -175,7 +166,6 @@ def generate_launch_description():
         odometry_node,
         ekf_node,
         static_tf_laser,
-        static_tf_odom,
         slam_toolbox_node,
         map_saver_server,
         lifecycle_manager,
