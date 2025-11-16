@@ -27,6 +27,7 @@ setup(
     entry_points={
         'console_scripts': [
             'odometry_node = ogre_slam.odometry_node:main',
+            'dummy_odom_node = ogre_slam.dummy_odom_node:main',
         ],
     },
 )
