@@ -39,8 +39,8 @@ slam_toolbox:
     # General Parameters
     use_scan_matching: true
     use_scan_barycenter: true
-    minimum_travel_distance: 0.1    # Meters - 10cm movement to update map (scan-matching filters noise)
-    minimum_travel_heading: 0.1     # Radians - ~6° rotation to update map
+    minimum_travel_distance: 0.01   # Meters - 1cm for scan-matching mode (was 0.1)
+    minimum_travel_heading: 0.01    # Radians - ~0.5° for scan-matching mode (was 0.1)
     scan_buffer_size: 10
     scan_buffer_maximum_scan_distance: 10.0
     link_match_minimum_response_fine: 0.1
@@ -63,9 +63,9 @@ slam_toolbox:
     loop_search_space_smear_deviation: 0.03
 
     # Scan Matcher Parameters
-    # VERY HIGH penalties = ignore odometry completely (gear ratio unknown, odometry unreliable)
-    distance_variance_penalty: 10.0  # Very high - ignore odometry distance
-    angle_variance_penalty: 10.0     # Very high - ignore odometry angle
+    # Lower penalties for scan-matching mode (static odom transform)
+    distance_variance_penalty: 0.5   # Lower - rely more on scan matching
+    angle_variance_penalty: 1.0      # Lower - rely more on scan matching
 
     fine_search_angle_offset: 0.00349
     coarse_search_angle_offset: 0.349
