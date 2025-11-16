@@ -6,7 +6,8 @@ Launches all nodes required for SLAM mapping:
 - Odometry node
 - robot_localization EKF
 - slam_toolbox (mapping mode)
-- RViz
+- RViz (visualization)
+- ogre_teleop (robot control via web interface)
 """
 import os
 from ament_index_python.packages import get_package_share_directory
@@ -22,6 +23,7 @@ def generate_launch_description():
     # Get package directories
     ogre_slam_dir = get_package_share_directory('ogre_slam')
     rplidar_dir = get_package_share_directory('rplidar_ros')
+    ogre_teleop_dir = get_package_share_directory('ogre_teleop')
 
     # Configuration file paths
     odometry_params_file = os.path.join(ogre_slam_dir, 'config', 'odometry_params.yaml')
@@ -48,9 +50,16 @@ def generate_launch_description():
         description='Use robot_localization EKF for sensor fusion'
     )
 
+    use_teleop_arg = DeclareLaunchArgument(
+        'use_teleop',
+        default_value='true',
+        description='Launch ogre_teleop for robot control'
+    )
+
     rplidar_model = LaunchConfiguration('rplidar_model')
     use_rviz = LaunchConfiguration('use_rviz')
     use_ekf = LaunchConfiguration('use_ekf')
+    use_teleop = LaunchConfiguration('use_teleop')
 
     # 1. RPLIDAR launch
     rplidar_launch = IncludeLaunchDescription(
@@ -137,11 +146,20 @@ def generate_launch_description():
         }]
     )
 
+    # 9. ogre_teleop launch (motor control + camera + web interface)
+    teleop_launch = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(
+            os.path.join(ogre_teleop_dir, 'launch', 'web_teleop.launch.py')
+        ),
+        condition=IfCondition(use_teleop)
+    )
+
     return LaunchDescription([
         # Launch arguments
         rplidar_model_arg,
         use_rviz_arg,
         use_ekf_arg,
+        use_teleop_arg,
 
         # Nodes
         rplidar_launch,
@@ -151,5 +169,6 @@ def generate_launch_description():
         slam_toolbox_node,
         map_saver_server,
         lifecycle_manager,
-        rviz_node
+        rviz_node,
+        teleop_launch
     ])
