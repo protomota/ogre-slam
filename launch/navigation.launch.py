@@ -57,23 +57,18 @@ def generate_localization_nodes(context, *args, **kwargs):
         emulate_tty=True
     )
 
-    slam_toolbox_node = Node(
-        package='slam_toolbox',
-        executable='localization_slam_toolbox_node',
-        name='slam_toolbox',
-        output='screen',
-        parameters=[
-            slam_params_file,
-            {
-                'use_sim_time': False,
-                'map_file_name': os.path.join(map_dir, map_file_name),
-                'map_start_at_dock': False
-            }
-        ],
-        emulate_tty=True
+    # NOTE: slam_toolbox localization requires .posegraph file which we don't have
+    # For now, use static map->odom transform (robot assumed to start at map origin)
+    # TODO: Add AMCL for proper localization
+
+    static_map_to_odom = Node(
+        package='tf2_ros',
+        executable='static_transform_publisher',
+        name='map_to_odom_broadcaster',
+        arguments=['0', '0', '0', '0', '0', '0', 'map', 'odom']
     )
 
-    return [map_server_node, slam_toolbox_node]
+    return [map_server_node, static_map_to_odom]
 
 
 def generate_launch_description():
