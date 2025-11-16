@@ -26,6 +26,7 @@ sudo apt install -y \
   ros-humble-nav2-planner \
   ros-humble-nav2-controller \
   ros-humble-nav2-bt-navigator \
+  ros-humble-nav2-behavior-tree \
   ros-humble-nav2-dwb-controller \
   ros-humble-nav2-recoveries \
   ros-humble-nav2-behaviors \
@@ -278,6 +279,120 @@ DWBLocalPlanner:
 ```yaml
 NavfnPlanner:
   tolerance: 0.2  # Increase from 0.1 (allows less precise goals)
+```
+
+## Remote Visualization (Headless Operation)
+
+If you're running the Jetson over SSH without a display, you have several options for visualizing navigation:
+
+### Option 1: Launch Without RViz (Recommended)
+
+Disable RViz on the Jetson to save resources:
+
+```bash
+ros2 launch ogre_slam navigation.launch.py \
+  map:=~/ros2_ws/src/ogre-slam/maps/my_map.yaml \
+  use_rviz:=false
+```
+
+Navigate using:
+- **Web interface**: http://10.21.21.45:8080 (manual control)
+- **Command line**: Send goals via ROS2 topics
+- **Remote RViz**: Run RViz on another computer (see below)
+
+### Option 2: Remote RViz from Another Computer
+
+Run RViz on your desktop/laptop computer while the Jetson runs headless.
+
+**On the Jetson** (launch without RViz):
+```bash
+ros2 launch ogre_slam navigation.launch.py \
+  map:=~/ros2_ws/src/ogre-slam/maps/my_map.yaml \
+  use_rviz:=false
+```
+
+**On your remote computer** (must have ROS2 Humble installed):
+
+1. **Set ROS environment variables**:
+   ```bash
+   export ROS_DOMAIN_ID=42
+   export ROS_LOCALHOST_ONLY=0
+   ```
+
+2. **Launch RViz with navigation config**:
+   ```bash
+   # If you have the ogre-slam repo cloned:
+   rviz2 -d ~/ros2_ws/src/ogre-slam/rviz/navigation.rviz
+
+   # Or create a new config manually:
+   rviz2
+   ```
+
+3. **In RViz, configure displays**:
+   - Add → Map → Topic: `/map`
+   - Add → LaserScan → Topic: `/scan`
+   - Add → Path → Topic: `/plan`
+   - Add → PointCloud2 → Topic: `/camera/camera/depth/color/points`
+   - Add → RobotModel (requires URDF)
+   - Add → TF
+   - Fixed Frame: `map`
+
+4. **Add Nav2 tools** (top toolbar):
+   - Click "+", select "rviz_default_plugins/SetInitialPose"
+   - Click "+", select "rviz_default_plugins/SetGoal"
+
+**Network Requirements**:
+- Both computers on same network (e.g., 10.21.21.x)
+- Firewall allows ROS2 DDS traffic
+- For FastDDS (ROS2 default), ensure multicast is enabled on network
+- If multicast doesn't work, use peer discovery:
+  ```bash
+  export FASTRTPS_DEFAULT_PROFILES_FILE=/path/to/peer_discovery.xml
+  ```
+
+**Troubleshooting Remote RViz**:
+- No topics visible: Check `ROS_DOMAIN_ID` matches on both machines (42)
+- Connection issues: Verify `ros2 topic list` shows topics from Jetson
+- Slow performance: Reduce RViz display rates or disable PointCloud2
+
+### Option 3: X11 Forwarding (Not Recommended)
+
+While possible, X11 forwarding over SSH is very slow for RViz:
+
+```bash
+ssh -X jetson@10.21.21.45
+ros2 launch ogre_slam navigation.launch.py map:=~/maps/my_map.yaml
+```
+
+This will be laggy and consume significant bandwidth. Use Options 1 or 2 instead.
+
+### Option 4: Send Goals via Command Line
+
+Control navigation without RViz using ROS2 topics:
+
+**Set initial pose**:
+```bash
+ros2 topic pub --once /initialpose geometry_msgs/PoseWithCovarianceStamped \
+  "{header: {frame_id: 'map'},
+    pose: {pose: {position: {x: 0.0, y: 0.0, z: 0.0},
+                   orientation: {x: 0.0, y: 0.0, z: 0.0, w: 1.0}}}}"
+```
+
+**Send navigation goal**:
+```bash
+ros2 topic pub --once /goal_pose geometry_msgs/PoseStamped \
+  "{header: {frame_id: 'map'},
+    pose: {position: {x: 2.0, y: 1.0, z: 0.0},
+           orientation: {x: 0.0, y: 0.0, z: 0.0, w: 1.0}}}"
+```
+
+**Monitor navigation status**:
+```bash
+# Watch current robot pose
+ros2 topic echo /amcl_pose
+
+# Check if goal reached
+ros2 topic echo /navigate_to_pose/_action/status
 ```
 
 ## Troubleshooting

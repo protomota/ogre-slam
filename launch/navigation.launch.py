@@ -22,12 +22,31 @@ Arguments:
 import os
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription
+from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription, OpaqueFunction
 from launch.conditions import IfCondition
 from launch.launch_description_sources import PythonLaunchDescriptionSource
-from launch.substitutions import LaunchConfiguration, PathJoinSubstitution
+from launch.substitutions import LaunchConfiguration, PathJoinSubstitution, PythonExpression
 from launch_ros.actions import Node
 from launch_ros.substitutions import FindPackageShare
+
+
+def generate_map_server_node(context, *args, **kwargs):
+    """Generate map server node with expanded map path."""
+    map_path = LaunchConfiguration('map').perform(context)
+    expanded_path = os.path.expanduser(map_path)
+    expanded_path = os.path.expandvars(expanded_path)
+
+    return [Node(
+        package='nav2_map_server',
+        executable='map_server',
+        name='map_server',
+        output='screen',
+        parameters=[{
+            'use_sim_time': False,
+            'yaml_filename': expanded_path
+        }],
+        emulate_tty=True
+    )]
 
 
 def generate_launch_description():
@@ -176,18 +195,8 @@ def generate_launch_description():
         emulate_tty=True
     )
 
-    # 8. Map server (loads saved map)
-    map_server_node = Node(
-        package='nav2_map_server',
-        executable='map_server',
-        name='map_server',
-        output='screen',
-        parameters=[{
-            'use_sim_time': False,
-            'yaml_filename': map_file
-        }],
-        emulate_tty=True
-    )
+    # 8. Map server (loads saved map with path expansion)
+    map_server_launcher = OpaqueFunction(function=generate_map_server_node)
 
     # 9. Nav2 Lifecycle Manager (activates Nav2 nodes)
     lifecycle_manager_navigation = Node(
@@ -326,7 +335,7 @@ def generate_launch_description():
         slam_toolbox_node,
 
         # Map server
-        map_server_node,
+        map_server_launcher,
         lifecycle_manager_localization,
 
         # Nav2 stack
