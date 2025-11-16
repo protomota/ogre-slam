@@ -46,8 +46,8 @@ def generate_launch_description():
 
     use_ekf_arg = DeclareLaunchArgument(
         'use_ekf',
-        default_value='true',
-        description='Use robot_localization EKF for sensor fusion (publishes odom→base_link)'
+        default_value='false',
+        description='Use robot_localization EKF for sensor fusion (disable without odometry)'
     )
 
     use_teleop_arg = DeclareLaunchArgument(
@@ -56,10 +56,17 @@ def generate_launch_description():
         description='Launch ogre_teleop for robot control'
     )
 
+    use_odometry_arg = DeclareLaunchArgument(
+        'use_odometry',
+        default_value='false',
+        description='Launch odometry node (WARNING: conflicts with motor_control GPIO - disable for now)'
+    )
+
     rplidar_model = LaunchConfiguration('rplidar_model')
     use_rviz = LaunchConfiguration('use_rviz')
     use_ekf = LaunchConfiguration('use_ekf')
     use_teleop = LaunchConfiguration('use_teleop')
+    use_odometry = LaunchConfiguration('use_odometry')
 
     # 1. RPLIDAR launch
     rplidar_launch = IncludeLaunchDescription(
@@ -69,14 +76,15 @@ def generate_launch_description():
         ])
     )
 
-    # 2. Odometry node
+    # 2. Odometry node (disabled by default - GPIO conflict with motor_control)
     odometry_node = Node(
         package='ogre_slam',
         executable='odometry_node',
         name='odometry_node',
         output='screen',
         parameters=[odometry_params_file],
-        emulate_tty=True
+        emulate_tty=True,
+        condition=IfCondition(use_odometry)
     )
 
     # 3. robot_localization EKF node (sensor fusion)
@@ -160,11 +168,12 @@ def generate_launch_description():
         use_rviz_arg,
         use_ekf_arg,
         use_teleop_arg,
+        use_odometry_arg,
 
         # Nodes
         rplidar_launch,
-        odometry_node,
-        ekf_node,
+        odometry_node,        # Conditional - disabled by default (GPIO conflict)
+        ekf_node,             # Conditional - disabled by default (no odometry)
         static_tf_laser,
         slam_toolbox_node,
         map_saver_server,
