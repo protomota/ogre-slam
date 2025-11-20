@@ -288,3 +288,6 @@ Python dependencies (from project-ogre):
 - Jetson.GPIO
 - numpy
 - rclpy (from ROS2)
+- update your memory with that
+- just so you know you have to set local rotation 0 to o,o,o and Local Rotation 1 to 90,0,0
+- you always miss a step. you have to add Angler Drive
