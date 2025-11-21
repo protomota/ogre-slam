@@ -35,6 +35,14 @@ This ROS2 package provides SLAM (Simultaneous Localization and Mapping) and auto
 
 ### Robot Configuration
 
+**Physical Dimensions:**
+- **Body**: 310mm (L) × 160mm (W) × 175mm (H), positioned 20mm above wheel axle
+- **Wheels**: 40mm radius, 40mm width
+- **Wheelbase**: 95mm (front-to-rear axle distance)
+- **Track Width**: 205mm (left-to-right wheel centers)
+- **LIDAR Mount**: On 65mm posts, LIDAR at 0.30m above base_link (rotated 180°)
+- **Camera Mount**: RealSense D435 at 0.15m forward, 0.10m above base_link
+
 **Motor Layout:**
 ```
 M4 (FL) --- M1 (FR)
@@ -312,9 +320,9 @@ ogre-slam/
 ```
 map (from slam_toolbox)
   └─ odom (from EKF or odometry_node)
-      └─ base_link (robot center)
-          ├─ laser (RPLIDAR)
-          ├─ camera_link (RealSense)
+      └─ base_link (robot center at wheel axle height)
+          ├─ laser (RPLIDAR: 0.30m up, 180° rotated - on 65mm posts)
+          ├─ camera_link (RealSense: 0.15m forward, 0.10m up)
           └─ imx477_camera_optical_frame (RPi camera)
 ```
 

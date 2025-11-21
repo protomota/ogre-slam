@@ -114,8 +114,8 @@ tegrastats
 ```
 map (from slam_toolbox in mapping OR amcl in navigation)
   └─ odom (from ekf_filter_node OR odometry_node)
-      └─ base_link (robot center)
-          ├─ laser (RPLIDAR: 0.0m forward, 0.27m up, 180° rotated)
+      └─ base_link (robot center at wheel axle height)
+          ├─ laser (RPLIDAR: 0.0m forward, 0.30m up, 180° rotated - mounted on 65mm posts)
           ├─ camera_link (RealSense: 0.15m forward, 0.10m up)
           │   ├─ camera_depth_frame
           │   │   └─ camera_depth_optical_frame (pointcloud frame)
@@ -288,6 +288,99 @@ Python dependencies (from project-ogre):
 - Jetson.GPIO
 - numpy
 - rclpy (from ROS2)
-- update your memory with that
-- just so you know you have to set local rotation 0 to o,o,o and Local Rotation 1 to 90,0,0
-- you always miss a step. you have to add Angler Drive
+
+## Isaac Sim Simulation
+
+This package includes USD robot models for testing in NVIDIA Isaac Sim 5.0+ before deploying to hardware.
+
+### Isaac Sim Files
+
+- `ogre.usd`: Main Isaac Sim scene with summit_xl_omni_four prebuilt mecanum robot
+- `ogre2-5.usd`: Experimental robot configurations (not tracked in git)
+
+### Robot Physical Dimensions
+
+**Body:**
+- Length (X): 0.31m (310mm)
+- Width (Y): 0.16m (160mm)
+- Height (Z): 0.175m (175mm)
+- Position: 20mm above wheel axle (body bottom at Z=0.06m, center at Z=0.1475m)
+
+**Wheels:**
+- Radius: 0.040m (40mm)
+- Width: 0.040m (40mm)
+- Wheelbase: 0.095m (front-to-rear axle distance)
+- Track width: 0.205m (left-to-right wheel center distance)
+
+**Wheel Positions (relative to base_link at wheel axle height):**
+- Front-Left (FL): (0.0475, 0.1025, 0.04)
+- Front-Right (FR): (0.0475, -0.1025, 0.04)
+- Rear-Left (RL): (-0.0475, 0.1025, 0.04)
+- Rear-Right (RR): (-0.0475, -0.1025, 0.04)
+
+**LIDAR Mounting:**
+- 65mm posts on top of robot body (represented as 0.05×0.05×0.065m cube at Z=0.2675m)
+- LIDAR frame at Z=0.30m, rotated 180° around Z axis
+
+**Camera Mounting:**
+- RealSense D435 at (0.15, 0, 0.10) - 15cm forward, 10cm above base_link
+
+### Mecanum Drive Action Graph Setup
+
+The Isaac Sim robot uses an action graph for keyboard teleop with proper mecanum kinematics:
+
+**Keyboard Controls:**
+- W/S: Forward/backward (vx)
+- A/D: Rotate left/right (vtheta)
+- Q/E: Strafe left/right (vy)
+
+**Mecanum Wheel Equations:**
+```
+wheel_fl = vx - vy - vtheta_L
+wheel_fr = vx + vy + vtheta_L
+wheel_rl = vx + vy - vtheta_L
+wheel_rr = vx - vy + vtheta_L
+```
+Where L = (wheelbase + trackwidth) / 2
+
+**Important Notes:**
+- Joint names must match robot exactly (e.g., `wheel_joint_fl`, `wheel_joint_fr`, etc.)
+- Velocity array order must match joint names array order in Articulation Controller
+- For prebuilt robots, check actual articulation path (e.g., `/World/summit_xl_omni_four`)
+- Wheel negations depend on physical wheel orientation - test and adjust if motion is inverted
+
+### Isaac Sim Wheel Joint Configuration
+
+Each wheel joint (RevoluteJoint) requires:
+```
+Body0: body (robot base)
+Body1: . (wheel itself)
+Axis: Y
+Local Rotation 0: (0, 0, 0)
+Local Rotation 1: (90, 0, 0)  ← CRITICAL for proper wheel orientation
+
+Drive → Angular:
+  Type: force
+  Max Force: 1000-10000 (tune for stability)
+  Target Velocity: 0 (controlled by action graph)
+  Damping: 0.1-1.0 (higher = smoother motion)
+  Stiffness: 0.0
+```
+
+### Common Isaac Sim Issues
+
+**"Failed to find articulation" error:**
+- Articulation Controller path is wrong or ArticulationRoot not applied
+- Solution: Right-click robot root → Copy Prim Path → paste in action graph
+
+**Inverted controls after switching robots:**
+- Different wheel orientations require different velocity signs
+- Solution: Test each motion, add/remove negations on wheel velocities as needed
+
+**Robot tips over during rotation:**
+- Center of mass too high or forces too aggressive
+- Solution: Lower robot body, reduce Max Force, increase Damping
+
+**Strafe doesn't work:**
+- Simple cylinder wheels cannot strafe (need actual mecanum roller physics)
+- Complex mecanum wheels (with rollers) work but may reduce FPS significantly
