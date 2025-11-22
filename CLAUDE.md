@@ -300,17 +300,37 @@ This package includes USD robot models for testing in NVIDIA Isaac Sim 5.0+ befo
 
 ### Robot Physical Dimensions
 
-**Body:**
-- Length (X): 0.31m (310mm)
+**Body (Main Chassis):**
+- Length (X): 0.20m (200mm)
 - Width (Y): 0.16m (160mm)
 - Height (Z): 0.175m (175mm)
 - Position: 20mm above wheel axle (body bottom at Z=0.06m, center at Z=0.1475m)
+- Mass: ~2.7kg
+
+**Weighted Barrels (Front):**
+- Two cylinders: 55mm diameter × 70mm tall
+- Position: In front of body, flush to base
+  - Left barrel: (0.1275, 0.04, 0.095)
+  - Right barrel: (0.1275, -0.04, 0.095)
+- Mass: 0.355kg each (0.71kg total)
+
+**Battery Pack (Rear):**
+- Dimensions: 55mm (depth) × 160mm (width) × ~40mm (height)
+- Position: (-0.1275, 0, 0.08) - centered, behind body
+- Mass: ~0.71kg (counterweight to barrels)
+
+**Overall Robot Footprint:**
+- Total Length: ~310mm (barrel front to battery back)
+- Total Width: 205mm (track width)
+- Total Height: 300mm (to top of LIDAR)
+- Total Mass: ~4.5-5.0kg
 
 **Wheels:**
 - Radius: 0.040m (40mm)
 - Width: 0.040m (40mm)
 - Wheelbase: 0.095m (front-to-rear axle distance)
 - Track width: 0.205m (left-to-right wheel center distance)
+- Mass: ~0.1kg each
 
 **Wheel Positions (relative to base_link at wheel axle height):**
 - Front-Left (FL): (0.0475, 0.1025, 0.04)

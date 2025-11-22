@@ -36,10 +36,13 @@ This ROS2 package provides SLAM (Simultaneous Localization and Mapping) and auto
 ### Robot Configuration
 
 **Physical Dimensions:**
-- **Body**: 310mm (L) × 160mm (W) × 175mm (H), positioned 20mm above wheel axle
+- **Body**: 200mm (L) × 160mm (W) × 175mm (H), positioned 20mm above wheel axle
+- **Weighted Barrels**: Two 55mm dia × 70mm tall cylinders in front (0.71kg total)
+- **Battery Pack**: 55mm × 160mm × 40mm behind body (0.71kg, counterweight)
 - **Wheels**: 40mm radius, 40mm width
 - **Wheelbase**: 95mm (front-to-rear axle distance)
 - **Track Width**: 205mm (left-to-right wheel centers)
+- **Total Footprint**: ~310mm length × 205mm width × 300mm height
 - **LIDAR Mount**: On 65mm posts, LIDAR at 0.30m above base_link (rotated 180°)
 - **Camera Mount**: RealSense D435 at 0.15m forward, 0.10m above base_link
 
