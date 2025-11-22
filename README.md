@@ -44,7 +44,7 @@ This ROS2 package provides SLAM (Simultaneous Localization and Mapping) and auto
 - **Track Width**: 205mm (left-to-right wheel centers)
 - **Total Footprint**: ~310mm length × 205mm width × 300mm height
 - **LIDAR Mount**: On 65mm posts, LIDAR at 0.30m above base_link (rotated 180°)
-- **Camera Mount**: RealSense D435 at 0.15m forward, 0.10m above base_link
+- **Camera Mount**: Front camera at 0.15m forward, 0.10m above base_link (`front_camera` in Isaac Sim, `camera_link` for RealSense D435 on real robot)
 
 **Motor Layout:**
 ```
@@ -325,7 +325,8 @@ map (from slam_toolbox)
   └─ odom (from EKF or odometry_node)
       └─ base_link (robot center at wheel axle height)
           ├─ laser (RPLIDAR: 0.30m up, 180° rotated - on 65mm posts)
-          ├─ camera_link (RealSense: 0.15m forward, 0.10m up)
+          ├─ front_camera (Isaac Sim camera: 0.15m forward, 0.10m up)
+          ├─ camera_link (Real robot RealSense D435: 0.15m forward, 0.10m up)
           └─ imx477_camera_optical_frame (RPi camera)
 ```
 

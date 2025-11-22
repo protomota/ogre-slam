@@ -116,7 +116,8 @@ map (from slam_toolbox in mapping OR amcl in navigation)
   └─ odom (from ekf_filter_node OR odometry_node)
       └─ base_link (robot center at wheel axle height)
           ├─ laser (RPLIDAR: 0.0m forward, 0.30m up, 180° rotated - mounted on 65mm posts)
-          ├─ camera_link (RealSense: 0.15m forward, 0.10m up)
+          ├─ front_camera (Camera: 0.15m forward, 0.10m up - Isaac Sim camera sensor)
+          ├─ camera_link (RealSense D435: 0.15m forward, 0.10m up - real robot only)
           │   ├─ camera_depth_frame
           │   │   └─ camera_depth_optical_frame (pointcloud frame)
           │   └─ camera_color_frame
@@ -343,7 +344,8 @@ This package includes USD robot models for testing in NVIDIA Isaac Sim 5.0+ befo
 - LIDAR frame at Z=0.30m, rotated 180° around Z axis
 
 **Camera Mounting:**
-- RealSense D435 at (0.15, 0, 0.10) - 15cm forward, 10cm above base_link
+- Isaac Sim: `front_camera` frame at (0.15, 0, 0.10) - 15cm forward, 10cm above base_link
+- Real Robot: `camera_link` for RealSense D435 at same position (0.15, 0, 0.10)
 
 **LIDAR Sensor (Isaac Sim 5.0):**
 - Use **2D PhysXLidar** sensor (recommended by NVIDIA for Isaac Sim 5.0)
