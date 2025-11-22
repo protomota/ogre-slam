@@ -38,7 +38,7 @@ This ROS2 package provides SLAM (Simultaneous Localization and Mapping) and auto
 **Physical Dimensions:**
 - **Body**: 200mm (L) × 160mm (W) × 175mm (H), positioned 20mm above wheel axle
 - **Weighted Barrels**: Two 55mm dia × 70mm tall cylinders in front (0.71kg total)
-- **Battery Pack**: 55mm × 160mm × 40mm behind body (0.71kg, counterweight)
+- **Battery Pack**: 55mm × 160mm × 55mm behind body (0.71kg, counterweight)
 - **Wheels**: 40mm radius, 40mm width
 - **Wheelbase**: 95mm (front-to-rear axle distance)
 - **Track Width**: 205mm (left-to-right wheel centers)

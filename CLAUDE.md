@@ -315,8 +315,8 @@ This package includes USD robot models for testing in NVIDIA Isaac Sim 5.0+ befo
 - Mass: 0.355kg each (0.71kg total)
 
 **Battery Pack (Rear):**
-- Dimensions: 55mm (depth) × 160mm (width) × ~40mm (height)
-- Position: (-0.1275, 0, 0.08) - centered, behind body
+- Dimensions: 55mm (depth) × 160mm (width) × 55mm (height)
+- Position: (-0.1275, 0, 0.0875) - centered, behind body
 - Mass: ~0.71kg (counterweight to barrels)
 
 **Overall Robot Footprint:**
@@ -344,6 +344,15 @@ This package includes USD robot models for testing in NVIDIA Isaac Sim 5.0+ befo
 
 **Camera Mounting:**
 - RealSense D435 at (0.15, 0, 0.10) - 15cm forward, 10cm above base_link
+
+**LIDAR Sensor (Isaac Sim 5.0):**
+- Use **2D PhysXLidar** sensor (recommended by NVIDIA for Isaac Sim 5.0)
+- Attach to `laser` frame at Z=0.30m
+- Configure for RPLIDAR A1 specs:
+  - Horizontal FOV: 360°
+  - Min Range: 0.15m
+  - Max Range: 12.0m
+  - Rotation Rate: ~6 Hz
 
 ### Mecanum Drive Action Graph Setup
 
