@@ -217,6 +217,30 @@ ros2 launch ogre_slam mapping.launch.py rplidar_model:=a1
 ros2 launch ogre_teleop web_teleop.launch.py
 ```
 
+## Isaac Sim Simulation
+
+For testing with NVIDIA Isaac Sim 5.0:
+
+### ROS2 Domain Configuration
+
+**IMPORTANT:** Isaac Sim must use the same ROS_DOMAIN_ID as your ROS2 system.
+
+This project uses **ROS_DOMAIN_ID=42** (same as the real robot).
+
+**To configure Isaac Sim:**
+1. In your action graph, select the **ROS2 Context** node
+2. In the Property panel, set **Domain ID** to: **42**
+3. Restart simulation (Stop ⏸️ then Play ▶️)
+
+**Verify domain match:**
+```bash
+# In terminal
+export ROS_DOMAIN_ID=42
+ros2 topic list  # Should see Isaac Sim topics when simulation is running
+```
+
+See `CLAUDE.md` for complete Isaac Sim robot configuration (dimensions, sensors, action graphs).
+
 ## Configuration
 
 ### Gear Ratio Calibration (CRITICAL!)
