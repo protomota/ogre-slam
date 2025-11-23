@@ -215,10 +215,13 @@ where L = (wheelbase + trackwidth) / 2. Incorrect wheel dimensions will cause ro
 
 ## Integration with Other Packages
 
-- **ogre_teleop**: Web-based manual control (http://10.21.21.45:8080). Launched automatically by both mapping and navigation launch files. Provides manual override and emergency stop.
-- **project-ogre**: Main robot repository containing motor control, camera drivers, and base TF frames
+**This package is standalone** - it declares all its own dependencies and can run independently.
+
+**Optional integration with:**
+- **ogre_teleop**: Web-based manual control (http://10.21.21.45:8080). Can be launched alongside for manual override and emergency stop.
 - **rplidar_ros**: LIDAR driver (separate package, launched via IncludeLaunchDescription)
 - **realsense2_camera**: RealSense driver (separate package, launched for navigation only)
+- **Motor control**: Any ROS2-compatible motor controller that subscribes to `/cmd_vel` and provides encoder data
 
 ## Performance Tuning for Jetson
 
@@ -285,10 +288,10 @@ sudo apt install -y \
   ros-humble-dwb-plugins
 ```
 
-Python dependencies (from project-ogre):
-- Jetson.GPIO
-- numpy
-- rclpy (from ROS2)
+Python dependencies (declared in setup.py):
+- Jetson.GPIO (for GPIO encoder reading)
+- numpy (for mecanum kinematics)
+- rclpy (from ROS2 Humble)
 
 ## Isaac Sim Simulation
 

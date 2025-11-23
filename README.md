@@ -4,7 +4,9 @@ SLAM mapping and autonomous navigation for Project Ogre mecanum drive robot.
 
 ## Overview
 
-This ROS2 package provides SLAM (Simultaneous Localization and Mapping) and autonomous navigation capabilities for the Project Ogre robot using:
+This is a **standalone ROS2 package** - it declares all its own dependencies and can run independently.
+
+It provides SLAM (Simultaneous Localization and Mapping) and autonomous navigation capabilities for mecanum drive robots using:
 - **Wheel odometry** from 4 mecanum drive encoders (2 PPR Hall sensors, calibrated gear_ratio: 224.0)
 - **RPLIDAR A1** 2D laser scanner for mapping and localization
 - **RealSense D435** depth camera for 3D obstacle avoidance
@@ -79,9 +81,14 @@ sudo apt install -y \
 
 ### Python Dependencies
 
-Already included from project-ogre:
-- `Jetson.GPIO`
-- `numpy`
+Required Python packages (installed automatically during build):
+- `Jetson.GPIO` - For GPIO encoder reading on Jetson hardware
+- `numpy` - For mecanum kinematics calculations
+
+**Manual installation (if needed):**
+```bash
+pip3 install Jetson.GPIO numpy
+```
 
 ## Installation
 

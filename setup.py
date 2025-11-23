@@ -17,7 +17,11 @@ setup(
         (os.path.join('share', package_name, 'rviz'), glob('rviz/*.rviz')),
         (os.path.join('share', package_name, 'scripts'), glob('scripts/*.sh')),
     ],
-    install_requires=['setuptools'],
+    install_requires=[
+        'setuptools',
+        'Jetson.GPIO',
+        'numpy',
+    ],
     zip_safe=True,
     maintainer='Jetson',
     maintainer_email='your-email@example.com',
