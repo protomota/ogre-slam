@@ -24,14 +24,16 @@ Then reload ogre.usd in Isaac Sim.
 ## Default Configuration
 
 - **Maze Size:** 5×5 cells (smaller, easier to map)
-- **Cell Size:** 60cm × 60cm (open space for driving)
-- **Wall Dimensions:** 60cm long × 38.5cm tall × 2cm thick
-- **Total Physical Size:** 3.0m × 3.0m
-- **Position:** Centered at (-1.5m, -1.5m, 0.6m) with open center cell
+- **Cell Size:** 80cm × 80cm (open space for driving)
+- **Wall Dimensions:** 80cm long × 38.5cm tall × 2cm thick
+- **Total Physical Size:** 4.0m × 4.0m
+- **Position:** Centered at (-2.0m, -2.0m, 0.6m) with open center cell
 - **Physics:** Rigid body collision with kinematic mode (static walls)
 - **Algorithm:** Recursive backtracking (guarantees solution)
 
 **Note:** The center cell (2,2) is always cleared to provide an open starting area for the robot. Cell size controls the drivable space between walls.
+
+**Robot Fit:** Designed for 340mm×200mm robot (diagonal 390mm). Cell size provides 410mm clearance for comfortable mecanum omnidirectional navigation.
 
 ## Customization
 
@@ -39,22 +41,22 @@ Edit `scripts/generate_maze.py`:
 
 ```python
 # Change maze size
-maze = MazeGenerator(width=10, height=10)  # 10x10 instead of 8x8
+maze = MazeGenerator(width=10, height=10)  # 10x10 instead of 5x5
 
 # Change cell size and wall dimensions
 create_maze_usd(
     maze,
-    cell_size=0.80,        # 80cm cells (more space for driving)
+    cell_size=1.00,        # 100cm cells (even more space)
     wall_height=0.385,     # 38.5cm tall (matches real cardboard)
     wall_thickness=0.02,   # 2cm thick
-    maze_x=-2.0,           # Maze Xform position X
-    maze_y=-2.0,           # Maze Xform position Y
-    maze_z=0.0             # Maze Xform position Z (ground level)
+    maze_x=-2.5,           # Maze Xform position X (adjust for new size)
+    maze_y=-2.5,           # Maze Xform position Y (adjust for new size)
+    maze_z=0.6             # Maze Xform position Z (wall base height)
 )
 
 # Get same maze every time (reproducible)
 random.seed(42)  # Add at top of main()
-maze = MazeGenerator(width=8, height=8)
+maze = MazeGenerator(width=5, height=5)
 ```
 
 ## Features
@@ -105,7 +107,7 @@ cp ogre_backup.usd ogre.usd
 
 **Maze too big/small?**
 - Adjust `MazeGenerator(width=X, height=Y)`
-- Default is 8x8 cells = ~2m × 2m
+- Default is 5x5 cells = 4.0m × 4.0m (80cm per cell)
 
 **Robot collides with walls?**
 - Walls already have collision enabled
@@ -136,7 +138,8 @@ cp ogre_backup.usd ogre.usd
 ---
 
 **Tips:**
-- Start with default 8x8 maze for testing
-- Smaller mazes (5x5) map faster
-- Larger mazes (12x12+) test SLAM loop closure
+- Start with default 5x5 maze for testing (4m × 4m)
+- Smaller mazes (3x3) map faster but less interesting
+- Larger mazes (8x8+) test SLAM loop closure
+- Cell size 80cm fits 340mm robot with 410mm clearance
 - Thin walls (2cm) match real cardboard

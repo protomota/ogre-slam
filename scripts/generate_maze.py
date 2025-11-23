@@ -223,33 +223,36 @@ def main():
     maze.grid[center][center] = {'N': False, 'S': False, 'E': False, 'W': False}
 
     # Calculate centered position
-    # 5 cells × 0.6m = 3.0m total maze size
-    # To center at origin: offset by -half_size = -1.5m
-    maze_size = 5 * 0.60  # 3.0m
-    center_offset = -maze_size / 2  # -1.5m
+    # Robot: 340mm wide × 200mm long (diagonal: 390mm)
+    # Cell size: 0.80m = 800mm (410mm clearance for diagonal movement)
+    # 5 cells × 0.8m = 4.0m total maze size
+    # To center at origin: offset by -half_size = -2.0m
+    maze_size = 5 * 0.80  # 4.0m
+    center_offset = -maze_size / 2  # -2.0m
 
     # Add maze to ogre.usd
     create_maze_usd(
         maze,
-        cell_size=0.60,       # 60cm open space (robot can drive through)
+        cell_size=0.80,       # 80cm open space (comfortable for 340mm wide robot)
         wall_height=0.385,    # 38.5cm tall
         wall_thickness=0.02,  # 2cm thick
         usd_file="/home/brad/ros2_ws/src/ogre-slam/ogre.usd",
-        maze_x=center_offset, # Centered X (-1.5m)
-        maze_y=center_offset, # Centered Y (-1.5m)
+        maze_x=center_offset, # Centered X (-2.0m)
+        maze_y=center_offset, # Centered Y (-2.0m)
         maze_z=0.6            # Wall base at 60cm height
     )
 
     print("\n📝 Customization options:")
     print("   Edit the script to change:")
     print("   - Maze size: MazeGenerator(width=5, height=5)")
-    print("   - Cell size: cell_size=0.60 (60cm paths)")
+    print("   - Cell size: cell_size=0.80 (80cm paths for 340mm robot)")
     print("   - Wall height: wall_height=0.385 (38.5cm tall)")
     print("   - Wall thickness: wall_thickness=0.02 (2cm thick)")
     print("   - Position: Auto-centered at origin with open center")
     print("   - Random seed: random.seed(42) for reproducible mazes")
     print("\n⚠️  Note: This modifies ogre.usd - make a backup first!")
     print("💡 Tip: Center cell is always clear for robot starting position")
+    print("💡 Robot: 340mm×200mm (diagonal 390mm) fits with 410mm clearance")
     print("💡 Physics: Walls have rigid body collision (kinematic mode)")
 
 
