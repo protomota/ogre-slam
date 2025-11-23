@@ -23,15 +23,15 @@ Then reload ogre.usd in Isaac Sim.
 
 ## Default Configuration
 
-- **Maze Size:** 8×8 cells
+- **Maze Size:** 5×5 cells (smaller, easier to map)
 - **Cell Size:** 60cm × 60cm (open space for driving)
 - **Wall Dimensions:** 60cm long × 38.5cm tall × 2cm thick
-- **Total Physical Size:** ~4.8m × 4.8m
-- **Position:** Maze Xform at (-3.6m, -1.3m, 0.6m)
+- **Total Physical Size:** 3.0m × 3.0m
+- **Position:** Centered at origin (0, 0, 0) with open center cell
 - **Physics:** Rigid body collision with kinematic mode (static walls)
 - **Algorithm:** Recursive backtracking (guarantees solution)
 
-**Note:** Cell size controls the drivable space between walls. Wall segments are scaled to span the full cell edge (60cm long).
+**Note:** The center cell (2,2) is always cleared to provide an open starting area for the robot. Cell size controls the drivable space between walls.
 
 ## Customization
 

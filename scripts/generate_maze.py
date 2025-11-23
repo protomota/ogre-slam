@@ -212,10 +212,21 @@ def create_maze_usd(maze, cell_size=0.255, wall_height=0.385, wall_thickness=0.0
 
 def main():
     """Generate maze and add to ogre.usd file."""
-    print("🏗️  Generating 8x8 maze for Project Ogre...")
+    print("🏗️  Generating 5x5 maze for Project Ogre...")
 
-    # Generate maze
-    maze = MazeGenerator(width=8, height=8)
+    # Generate maze (start from center for open middle)
+    random.seed()  # Random each time
+    maze = MazeGenerator(width=5, height=5)
+
+    # Clear center cell walls to ensure open space for robot start
+    center = 2  # Center of 5x5 is index 2
+    maze.grid[center][center] = {'N': False, 'S': False, 'E': False, 'W': False}
+
+    # Calculate centered position
+    # 5 cells × 0.6m = 3.0m total maze size
+    # To center at origin: offset by -half_size = -1.5m
+    maze_size = 5 * 0.60  # 3.0m
+    center_offset = -maze_size / 2  # -1.5m
 
     # Add maze to ogre.usd
     create_maze_usd(
@@ -224,21 +235,21 @@ def main():
         wall_height=0.385,    # 38.5cm tall
         wall_thickness=0.02,  # 2cm thick
         usd_file="/home/brad/ros2_ws/src/ogre-slam/ogre.usd",
-        maze_x=-3.6,          # Maze Xform position X
-        maze_y=-1.3,          # Maze Xform position Y
-        maze_z=0.6            # Maze Xform position Z
+        maze_x=center_offset, # Centered X (-1.5m)
+        maze_y=center_offset, # Centered Y (-1.5m)
+        maze_z=0.0            # Ground level
     )
 
     print("\n📝 Customization options:")
     print("   Edit the script to change:")
-    print("   - Maze size: MazeGenerator(width=8, height=8)")
+    print("   - Maze size: MazeGenerator(width=5, height=5)")
     print("   - Cell size: cell_size=0.60 (60cm paths)")
     print("   - Wall height: wall_height=0.385 (38.5cm tall)")
     print("   - Wall thickness: wall_thickness=0.02 (2cm thick)")
-    print("   - Position: maze_x=-3.6, maze_y=-1.3, maze_z=0.6")
+    print("   - Position: Auto-centered at origin with open center")
     print("   - Random seed: random.seed(42) for reproducible mazes")
     print("\n⚠️  Note: This modifies ogre.usd - make a backup first!")
-    print("💡 Tip: cell_size controls the drivable space, not wall dimensions!")
+    print("💡 Tip: Center cell is always clear for robot starting position")
     print("💡 Physics: Walls have rigid body collision (kinematic mode)")
 
 
