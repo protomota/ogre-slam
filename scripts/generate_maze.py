@@ -236,13 +236,13 @@ def main():
     maze_size = 5 * 0.80  # 4.0m
     center_offset = -maze_size / 2  # -2.0m
 
-    # Add maze to ogre.usd
+    # Add maze to ogre_stable.usd
     create_maze_usd(
         maze,
         cell_size=0.80,       # 80cm open space (comfortable for 340mm wide robot)
         wall_height=0.385,    # 38.5cm tall
         wall_thickness=0.02,  # 2cm thick
-        usd_file="/home/brad/ros2_ws/src/ogre-slam/ogre.usd",
+        usd_file="/home/brad/ros2_ws/src/ogre-slam/ogre_stable.usd",
         maze_x=center_offset, # Centered X (-2.0m)
         maze_y=center_offset, # Centered Y (-2.0m)
         maze_z=0.6            # Wall base at 60cm height
