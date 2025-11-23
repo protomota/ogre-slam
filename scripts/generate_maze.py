@@ -84,6 +84,12 @@ def create_maze_usd(maze, cell_size=0.255, wall_height=0.385, wall_thickness=0.0
         print(f"📄 Creating new file: {usd_file}")
         stage = Usd.Stage.CreateNew(usd_file)
 
+    # Remove old maze if it exists
+    old_maze = stage.GetPrimAtPath('/Maze')
+    if old_maze.IsValid():
+        print(f"🗑️  Removing old maze...")
+        stage.RemovePrim('/Maze')
+
     # Create root prim for maze with position
     maze_prim = UsdGeom.Xform.Define(stage, '/Maze')
     maze_prim.AddTranslateOp().Set(Gf.Vec3d(maze_x, maze_y, maze_z))
