@@ -312,7 +312,7 @@ This package includes USD robot models for testing in NVIDIA Isaac Sim 5.0+ befo
 
 **⚠️ NOTE:** Two robot models exist:
 - **ogre.usd** - Original tall robot (175mm body, 95mm wheelbase, 205mm track) - UNSTABLE
-- **ogre_stable.usd** - New stable robot (110mm body, 150mm wheelbase, 300mm track) - RECOMMENDED
+- **ogre_stable.usd** - New stable robot (110mm body, 200mm wheelbase, 340mm track) - RECOMMENDED
 
 ---
 
@@ -326,23 +326,23 @@ This package includes USD robot models for testing in NVIDIA Isaac Sim 5.0+ befo
 - Mass: ~2.5kg (no barrels/battery)
 
 **Overall Robot Footprint:**
-- Total Length: ~385mm (wider wheelbase)
-- Total Width: 300mm (track width) - 46% WIDER
+- Total Length: ~280mm (wheelbase + wheel width)
+- Total Width: 340mm (track width) - 66% WIDER than original
 - Total Height: ~265mm (to top of LIDAR)
 - Total Mass: ~3.5kg (lighter, no top-heavy components)
 
 **Wheels:**
 - Radius: 0.040m (40mm)
 - Width: 0.040m (40mm)
-- Wheelbase: 0.150m (150mm front-to-rear) - 58% LONGER
-- Track width: 0.300m (300mm left-to-right) - 46% WIDER
+- Wheelbase: 0.200m (200mm front-to-rear) - 111% LONGER than original
+- Track width: 0.340m (340mm left-to-right) - 66% WIDER than original
 - Mass: ~0.1kg each
 
 **Wheel Positions (relative to base_link at wheel axle height):**
-- Front-Left (FL): (0.075, 0.150, 0.04)
-- Front-Right (FR): (0.075, -0.150, 0.04)
-- Rear-Left (RL): (-0.075, 0.150, 0.04)
-- Rear-Right (RR): (-0.075, -0.150, 0.04)
+- Front-Left (FL): (0.1, 0.17, 0.04)
+- Front-Right (FR): (0.1, -0.17, 0.04)
+- Rear-Left (RL): (-0.1, 0.17, 0.04)
+- Rear-Right (RR): (-0.1, -0.17, 0.04)
 
 **LIDAR Mounting:**
 - Posts adjusted for shorter body
@@ -352,8 +352,8 @@ This package includes USD robot models for testing in NVIDIA Isaac Sim 5.0+ befo
 
 **Stability Improvements:**
 - Center of gravity 49% lower (147.5mm → 75mm)
-- 58% longer wheelbase for front/back stability
-- 46% wider track for side-to-side stability
+- 111% longer wheelbase (95mm → 200mm) for front/back stability
+- 66% wider track (205mm → 340mm) for side-to-side stability
 - No top-heavy barrels or battery
 - 22% lighter overall mass
 
