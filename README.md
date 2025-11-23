@@ -285,6 +285,7 @@ Visualize SLAM mapping from Isaac Sim using the same RViz configuration as the r
 **Prerequisites:**
 - Isaac Sim running with ROS2 bridge (Domain ID = 42)
 - LIDAR configured to publish to `/scan` topic with frame `laser`
+- **TF transforms published**: `odom→base_link→laser` (see CLAUDE.md for setup)
 - Simulation playing (Press Play ▶️)
 
 **Launch RViz for Isaac Sim:**
@@ -307,7 +308,18 @@ This launches RViz with the universal SLAM configuration that works for both Isa
 - Same TF frame names (map, odom, base_link, laser)
 - Just change `ROS_DOMAIN_ID` if needed
 
-See `CLAUDE.md` for complete Isaac Sim robot configuration (dimensions, sensors, action graphs).
+**Troubleshooting:**
+
+If you see "Message Filter dropping message: frame 'laser' at time..." errors:
+- **Cause**: Isaac Sim not publishing TF transforms
+- **Fix**: Set up ROS2 TF publishing in Isaac Sim action graph (see CLAUDE.md "ROS2 TF Transform Publishing" section)
+- **Quick workaround**: In RViz, change Fixed Frame from `map` to `laser` (but won't show full odometry/SLAM)
+
+If RViz shows "waiting for transform...":
+- Verify TF tree: `ros2 run tf2_tools view_frames` (should show odom→base_link→laser)
+- Check topic: `ros2 topic echo /odom` (should see odometry messages)
+
+See `CLAUDE.md` for complete Isaac Sim robot configuration (dimensions, sensors, action graphs, TF setup).
 
 ## Configuration
 

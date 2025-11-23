@@ -359,6 +359,59 @@ This package includes USD robot models for testing in NVIDIA Isaac Sim 5.0+ befo
   - Max Range: 12.0m
   - Rotation Rate: ~6 Hz
 
+### ROS2 TF Transform Publishing
+
+**CRITICAL for RViz and SLAM:** Isaac Sim must publish TF transforms to match the real robot's TF tree.
+
+**Required TF Tree:**
+```
+odom
+  └─ base_link
+      └─ laser
+```
+
+**Action Graph Nodes Needed:**
+
+**1. Publish Odometry (odom → base_link transform):**
+- Add node: **ROS2 Publish Odometry**
+- Configuration:
+  - **robotPath**: `/World/summit_xl_omni_four` (your robot path)
+  - **Topic Name**: `/odom`
+  - **odomFrameId**: `odom`
+  - **chassisFrameId**: `base_link`
+- This publishes both `/odom` topic AND the `odom→base_link` TF transform
+
+**2. Publish Static Transform (base_link → laser):**
+- Add node: **ROS2 Publish Transform Tree** or **ROS2 Publish Static Transform**
+- Configuration:
+  - **parentFrameId**: `base_link`
+  - **childFrameId**: `laser`
+  - **Translation**: (0, 0, 0.30)
+  - **Rotation** (quaternion): (0, 0, 1, 0) ← represents 180° rotation around Z axis
+  - Or **Rotation** (euler XYZ degrees): (0, 0, 180)
+
+**3. Publish LaserScan with correct frame:**
+- In your LIDAR ROS2 publisher node:
+  - **Topic Name**: `/scan`
+  - **Frame ID**: `laser`
+
+**Execution Flow:**
+```
+On Playback Tick
+  ├─> ROS2 Publish Odometry (publishes odom→base_link TF)
+  ├─> ROS2 Publish Static Transform (publishes base_link→laser TF)
+  └─> ROS2 Publish LaserScan (publishes /scan with frame_id=laser)
+```
+
+**Verify TF Tree:**
+```bash
+# In terminal with ROS_DOMAIN_ID=42
+ros2 run tf2_tools view_frames
+# Should create frames.pdf showing: odom → base_link → laser
+```
+
+Without proper TF publishing, RViz will show errors like "frame 'laser' does not exist" or drop messages.
+
 ### Mecanum Drive Action Graph Setup
 
 The Isaac Sim robot uses an action graph for keyboard teleop with proper mecanum kinematics:
