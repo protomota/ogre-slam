@@ -23,7 +23,12 @@ def generate_launch_description():
     # Get package directories
     ogre_slam_dir = get_package_share_directory('ogre_slam')
     rplidar_dir = get_package_share_directory('rplidar_ros')
-    ogre_teleop_dir = get_package_share_directory('ogre_teleop')
+
+    # Only get ogre_teleop if it exists (optional dependency)
+    try:
+        ogre_teleop_dir = get_package_share_directory('ogre_teleop')
+    except:
+        ogre_teleop_dir = None
 
     # Configuration file paths
     odometry_params_file = os.path.join(ogre_slam_dir, 'config', 'odometry_params.yaml')
@@ -62,11 +67,18 @@ def generate_launch_description():
         description='Launch encoder-based odometry node for accurate SLAM'
     )
 
+    use_sim_time_arg = DeclareLaunchArgument(
+        'use_sim_time',
+        default_value='false',
+        description='Use simulation time (true for Isaac Sim, false for real robot)'
+    )
+
     rplidar_model = LaunchConfiguration('rplidar_model')
     use_rviz = LaunchConfiguration('use_rviz')
     use_ekf = LaunchConfiguration('use_ekf')
     use_teleop = LaunchConfiguration('use_teleop')
     use_odometry = LaunchConfiguration('use_odometry')
+    use_sim_time = LaunchConfiguration('use_sim_time')
 
     # 1. RPLIDAR launch
     rplidar_launch = IncludeLaunchDescription(
@@ -93,7 +105,7 @@ def generate_launch_description():
         executable='ekf_node',
         name='ekf_filter_node',
         output='screen',
-        parameters=[ekf_params_file],
+        parameters=[ekf_params_file, {'use_sim_time': use_sim_time}],
         remappings=[
             ('odometry/filtered', '/odometry/filtered')
         ],
@@ -106,7 +118,7 @@ def generate_launch_description():
         executable='async_slam_toolbox_node',
         name='slam_toolbox',
         output='screen',
-        parameters=[slam_params_file],
+        parameters=[slam_params_file, {'use_sim_time': use_sim_time}],
         emulate_tty=True
     )
 
@@ -154,25 +166,30 @@ def generate_launch_description():
         arguments=['-d', rviz_config_file],
         condition=IfCondition(use_rviz),
         parameters=[{
-            'use_sim_time': False
+            'use_sim_time': use_sim_time
         }]
     )
 
     # 9. ogre_teleop launch (motor control + camera + web interface)
-    teleop_launch = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource(
-            os.path.join(ogre_teleop_dir, 'launch', 'web_teleop.launch.py')
-        ),
-        condition=IfCondition(use_teleop)
-    )
+    # Only include if ogre_teleop package is installed
+    teleop_launch = None
+    if ogre_teleop_dir is not None:
+        teleop_launch = IncludeLaunchDescription(
+            PythonLaunchDescriptionSource(
+                os.path.join(ogre_teleop_dir, 'launch', 'web_teleop.launch.py')
+            ),
+            condition=IfCondition(use_teleop)
+        )
 
-    return LaunchDescription([
+    # Build launch description
+    launch_entities = [
         # Launch arguments
         rplidar_model_arg,
         use_rviz_arg,
         use_ekf_arg,
         use_teleop_arg,
         use_odometry_arg,
+        use_sim_time_arg,
 
         # Nodes
         rplidar_launch,
@@ -183,5 +200,10 @@ def generate_launch_description():
         map_saver_server,
         lifecycle_manager,
         rviz_node,
-        teleop_launch
-    ])
+    ]
+
+    # Only add teleop if package is available
+    if teleop_launch is not None:
+        launch_entities.append(teleop_launch)
+
+    return LaunchDescription(launch_entities)
