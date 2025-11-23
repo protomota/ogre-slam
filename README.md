@@ -278,6 +278,35 @@ ros2 run teleop_twist_keyboard teleop_twist_keyboard
 
 **Note:** The teleop terminal window must be in focus for keypresses to work.
 
+### SLAM Mapping with RViz
+
+Visualize SLAM mapping from Isaac Sim using the same RViz configuration as the real robot.
+
+**Prerequisites:**
+- Isaac Sim running with ROS2 bridge (Domain ID = 42)
+- LIDAR configured to publish to `/scan` topic with frame `laser`
+- Simulation playing (Press Play ▶️)
+
+**Launch RViz for Isaac Sim:**
+```bash
+cd ~/ros2_ws/src/ogre-slam
+./scripts/launch_isaac_sim_rviz.sh
+```
+
+This launches RViz with the universal SLAM configuration that works for both Isaac Sim and real robot.
+
+**Expected displays:**
+- **Grid** - Reference grid
+- **LaserScan** - LIDAR scan points from `/scan`
+- **Map** - SLAM-generated map from `/map` (if running slam_toolbox)
+- **TF** - Transform frames (base_link, laser, odom, map)
+- **Odometry** - Robot path from `/odom` or `/odometry/filtered`
+
+**Switching between Isaac Sim and real robot:**
+- Same RViz config works for both (both use `/scan`, `/odom`, `/map` topics)
+- Same TF frame names (map, odom, base_link, laser)
+- Just change `ROS_DOMAIN_ID` if needed
+
 See `CLAUDE.md` for complete Isaac Sim robot configuration (dimensions, sensors, action graphs).
 
 ## Configuration
