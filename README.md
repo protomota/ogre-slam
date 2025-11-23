@@ -149,27 +149,65 @@ This launches:
 
 ---
 
-### Mapping Mode (Build a Map)
+## SLAM Mapping
 
-**Single command launch:**
+Build maps using either the real robot or Isaac Sim simulation.
+
+### Quick Comparison: Real Robot vs Isaac Sim
+
+| Aspect | Real Robot | Isaac Sim |
+|--------|------------|-----------|
+| **Location** | Run on Jetson (10.21.21.45) | Run on development computer |
+| **Hardware** | Real RPLIDAR + encoders | Simulated sensors |
+| **Launch Command** | `./scripts/launch_mapping_session.sh` | `ros2 launch ogre_slam mapping.launch.py` with sim flags |
+| **Teleop** | Web interface (http://10.21.21.45:8080) | ROS2 keyboard teleop |
+| **Odometry** | Encoder-based (`use_odometry:=true`) | From Isaac Sim (`use_odometry:=false`) |
+| **EKF Filtering** | Yes (`use_ekf:=true`) | No (`use_ekf:=false`) |
+| **Time Source** | System time | Simulation clock (`use_sim_time:=true`) |
+| **ROS_DOMAIN_ID** | 42 | 42 |
+
+---
+
+### Mapping on Real Robot
+
+**Prerequisites:**
+- Robot powered on and connected to network (10.21.21.45)
+- RPLIDAR connected and powered
+- Encoders wired to GPIO pins
+- ogre_teleop package installed
+
+**Step 1: Launch mapping session**
+
+On the Jetson:
 ```bash
 cd ~/ros2_ws/src/ogre-slam
 ./scripts/launch_mapping_session.sh
 ```
 
 This launches:
-1. SLAM system (RPLIDAR, odometry, slam_toolbox, RViz)
-2. ogre_teleop web interface for manual control
+- RPLIDAR driver
+- Encoder-based odometry node
+- EKF sensor fusion
+- slam_toolbox (mapping mode)
+- RViz visualization
+- ogre_teleop web interface
 
-**Drive the robot:**
-1. Open browser: `http://10.21.21.45:8080`
-2. Drive slowly around the area
-3. Ensure good loop closures (revisit starting point)
-4. Watch RViz to see map being built
+**Step 2: Drive the robot**
 
-**Save map when done:**
+Open browser on any device on the network:
+```
+http://10.21.21.45:8080
+```
+
+Drive slowly around the area:
+- Use smooth, controlled movements
+- Ensure good loop closures (revisit starting point)
+- Watch RViz to see map being built
+
+**Step 3: Save the map**
+
+When mapping is complete, in another terminal:
 ```bash
-# In another terminal
 ros2 run nav2_map_server map_saver_cli -f ~/ros2_ws/src/ogre-slam/maps/my_map
 ```
 
@@ -177,9 +215,77 @@ This creates:
 - `my_map.yaml` - Map metadata
 - `my_map.pgm` - Map image
 
-**Stop system:**
+**Step 4: Stop the system**
 ```bash
 # Press Ctrl+C in launch terminal
+```
+
+---
+
+### Mapping in Isaac Sim
+
+**Prerequisites:**
+- Isaac Sim running with ogre.usd scene
+- Action graph configured (see "Isaac Sim Simulation" section below)
+- Isaac Sim playing (Press Play ▶️)
+- ROS_DOMAIN_ID=42 in ROS2 Context node
+
+**Step 1: Launch SLAM**
+
+On your development computer:
+```bash
+cd ~/ros2_ws
+source install/setup.bash
+export ROS_DOMAIN_ID=42
+export ROS_USE_SIM_TIME=true
+
+ros2 launch ogre_slam mapping.launch.py \
+  use_rviz:=true \
+  use_teleop:=false \
+  use_odometry:=false \
+  use_ekf:=false \
+  use_sim_time:=true
+```
+
+**What these flags mean:**
+- `use_sim_time:=true` - Sync with Isaac Sim's simulation clock
+- `use_odometry:=false` - Isaac Sim provides `/odom` topic
+- `use_ekf:=false` - Sim odometry is already clean (no noisy encoders)
+- `use_teleop:=false` - Don't launch ogre_teleop (not needed)
+- `use_rviz:=true` - Show visualization
+
+**Step 2: Drive the robot**
+
+In another terminal:
+```bash
+export ROS_DOMAIN_ID=42
+ros2 run teleop_twist_keyboard teleop_twist_keyboard
+```
+
+**Keyboard controls:**
+- **i** - Forward
+- **,** - Backward
+- **j** - Rotate left
+- **l** - Rotate right
+- **k** - Stop
+- **q/z** - Increase/decrease max speeds
+
+Drive slowly around the Isaac Sim environment and watch the map build in RViz!
+
+**Step 3: Save the map**
+
+When mapping is complete, in another terminal:
+```bash
+ros2 run nav2_map_server map_saver_cli -f ~/ros2_ws/src/ogre-slam/maps/isaac_sim_map
+```
+
+This creates:
+- `isaac_sim_map.yaml` - Map metadata
+- `isaac_sim_map.pgm` - Map image
+
+**Step 4: Stop the system**
+```bash
+# Press Ctrl+C in both terminals
 ```
 
 ### Remote Visualization
@@ -278,145 +384,25 @@ ros2 run teleop_twist_keyboard teleop_twist_keyboard
 
 **Note:** The teleop terminal window must be in focus for keypresses to work.
 
-### SLAM Mapping with RViz
+### Isaac Sim Action Graph Configuration
 
-Visualize SLAM mapping from Isaac Sim using the same RViz configuration as the real robot.
+**Required nodes for SLAM mapping:**
 
-**Prerequisites:**
-- Isaac Sim running with ROS2 bridge (Domain ID = 42)
-- LIDAR configured to publish to `/scan` topic with frame `laser`
-- **TF transforms published**: `odom→base_link→laser` (see CLAUDE.md for setup)
-- Simulation playing (Press Play ▶️)
+1. **ROS2 Context** - Set Domain ID = 42
+2. **Isaac Read Simulation Time** - Provides timestamps
+3. **ROS2 Publish Clock** - Publishes `/clock` topic
+4. **Isaac Compute Odometry** - Computes robot odometry
+5. **ROS2 Publish Odometry** - Publishes `/odom` topic
+6. **ROS2 Publish Raw Transform Tree** - Publishes dynamic `odom→base_link` TF
+7. **ROS2 Publish Transform Tree** - Publishes static `base_link→laser` TF
+8. **ROS2 Publish LaserScan** - Publishes `/scan` topic from 2D PhysXLidar
 
-**Launch RViz for Isaac Sim:**
-```bash
-cd ~/ros2_ws/src/ogre-slam
-./scripts/launch_isaac_sim_rviz.sh
-```
+**Critical connections:**
+- Connect **Simulation Time** output from Isaac Read Simulation Time to **timeStamp** input on ALL ROS2 Publish nodes
+- Set `parentFrameId: odom` and `childFrameId: base_link` in ROS2 Publish Raw Transform Tree
+- Set `parentFrameId: base_link` and `childFrameId: laser` in ROS2 Publish Transform Tree
 
-This launches RViz with the universal SLAM configuration that works for both Isaac Sim and real robot.
-
-**⚠️ IMPORTANT - Separate Scripts for Sim vs Real Robot:**
-
-The package provides **different scripts** for Isaac Sim and real robot visualization:
-
-| Use Case | Script | Time Source | ROS_USE_SIM_TIME |
-|----------|--------|-------------|------------------|
-| **Isaac Sim** | `launch_isaac_sim_rviz.sh` | Simulation clock (`/clock` topic) | `true` |
-| **Real Robot (Mapping)** | `remote_launch_slam_rviz.sh` | System time | Not set (real time) |
-| **Real Robot (Navigation)** | `remote_launch_nav_rviz.sh` | System time | Not set (real time) |
-
-**Why this matters:**
-- Isaac Sim publishes a `/clock` topic with simulation time
-- RViz must use `ROS_USE_SIM_TIME=true` to sync with simulation clock
-- Real robot uses system time, so RViz uses normal time
-- **These scripts do NOT interfere with each other** - they're for completely separate use cases
-
-**Expected displays:**
-- **Grid** - Reference grid
-- **LaserScan** - LIDAR scan points from `/scan`
-- **Map** - SLAM-generated map from `/map` (if running slam_toolbox)
-- **TF** - Transform frames (base_link, laser, odom, map)
-- **Odometry** - Robot path from `/odom` or `/odometry/filtered`
-
-**Switching between Isaac Sim and real robot:**
-- Same RViz config works for both (both use `/scan`, `/odom`, `/map` topics)
-- Same TF frame names (map, odom, base_link, laser)
-- Use the appropriate launch script for your use case
-- Set `ROS_DOMAIN_ID=42` for both
-
-### Full SLAM Mapping in Isaac Sim
-
-Run complete SLAM mapping in Isaac Sim before deploying to hardware:
-
-**Prerequisites:**
-- Isaac Sim running and playing (Press Play ▶️)
-- Isaac Sim action graph configured with:
-  - Isaac Read Simulation Time (provides timestamps)
-  - ROS2 Publish Clock (publishes `/clock` topic)
-  - ROS2 Publish Odometry (publishes `/odom` topic)
-  - ROS2 Publish Raw Transform Tree (publishes `odom→base_link` TF)
-  - ROS2 Publish Transform Tree (publishes `base_link→laser` static TF)
-  - ROS2 Publish LaserScan (publishes `/scan` topic)
-  - All timestamp inputs connected to Simulation Time output
-- ROS_DOMAIN_ID=42 configured in ROS2 Context node
-
-**Launch SLAM mapping:**
-```bash
-cd ~/ros2_ws
-source install/setup.bash
-export ROS_DOMAIN_ID=42
-export ROS_USE_SIM_TIME=true
-
-ros2 launch ogre_slam mapping.launch.py \
-  use_rviz:=true \
-  use_teleop:=false \
-  use_odometry:=false \
-  use_ekf:=false \
-  use_sim_time:=true
-```
-
-**Important flags:**
-- `use_sim_time:=true` - Use Isaac Sim's simulation clock (also disables conflicting static TF publisher)
-- `use_odometry:=false` - Don't run encoder-based odometry (Isaac Sim provides `/odom`)
-- `use_ekf:=false` - Don't run EKF (Isaac Sim odometry is already clean, unlike real robot encoders)
-- `use_teleop:=false` - Don't launch ogre_teleop (not needed for sim)
-- `use_rviz:=true` - Launch RViz for visualization (or use `launch_isaac_sim_rviz.sh` separately)
-
-**Note:** The launch file automatically disables the static `base_link→laser` TF publisher when `use_sim_time:=true`, since Isaac Sim provides this transform with proper timestamps.
-
-**Drive the robot:**
-
-In Isaac Sim, use the keyboard teleop action graph (if configured), or launch ROS2 keyboard teleop:
-
-```bash
-export ROS_DOMAIN_ID=42
-ros2 run teleop_twist_keyboard teleop_twist_keyboard
-```
-
-Controls:
-- **i**: Forward
-- **,**: Backward
-- **j**: Rotate left
-- **l**: Rotate right
-- **k**: Stop
-
-Drive slowly around the area and watch the map build in RViz!
-
-**Save the map:**
-
-When you've completed mapping:
-```bash
-ros2 run nav2_map_server map_saver_cli -f ~/ros2_ws/src/ogre-slam/maps/isaac_sim_map
-```
-
-This creates:
-- `isaac_sim_map.yaml` - Map metadata
-- `isaac_sim_map.pgm` - Map image
-
-**Key Differences from Real Robot:**
-
-| Aspect | Isaac Sim | Real Robot |
-|--------|-----------|------------|
-| Odometry Source | Isaac Sim ROS2 nodes | `odometry_node` (encoder-based) |
-| Time Source | Simulation clock (`/clock` topic) | System time |
-| `use_sim_time` | `true` | `false` |
-| `use_odometry` launch flag | `false` | `true` |
-| `use_ekf` launch flag | `false` (clean sim odometry) | `true` (filters noisy encoders) |
-| Teleop | ROS2 keyboard or action graph | ogre_teleop web interface |
-
-**Troubleshooting:**
-
-If you see "Message Filter dropping message: frame 'laser' at time..." errors:
-- **Cause**: Isaac Sim not publishing TF transforms
-- **Fix**: Set up ROS2 TF publishing in Isaac Sim action graph (see CLAUDE.md "ROS2 TF Transform Publishing" section)
-- **Quick workaround**: In RViz, change Fixed Frame from `map` to `laser` (but won't show full odometry/SLAM)
-
-If RViz shows "waiting for transform...":
-- Verify TF tree: `ros2 run tf2_tools view_frames` (should show odom→base_link→laser)
-- Check topic: `ros2 topic echo /odom` (should see odometry messages)
-
-See `CLAUDE.md` for complete Isaac Sim robot configuration (dimensions, sensors, action graphs, TF setup).
+See `CLAUDE.md` for detailed action graph setup, robot dimensions, and complete configuration.
 
 ## Configuration
 
