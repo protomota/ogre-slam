@@ -296,6 +296,22 @@ cd ~/ros2_ws/src/ogre-slam
 
 This launches RViz with the universal SLAM configuration that works for both Isaac Sim and real robot.
 
+**⚠️ IMPORTANT - Separate Scripts for Sim vs Real Robot:**
+
+The package provides **different scripts** for Isaac Sim and real robot visualization:
+
+| Use Case | Script | Time Source | ROS_USE_SIM_TIME |
+|----------|--------|-------------|------------------|
+| **Isaac Sim** | `launch_isaac_sim_rviz.sh` | Simulation clock (`/clock` topic) | `true` |
+| **Real Robot (Mapping)** | `remote_launch_slam_rviz.sh` | System time | Not set (real time) |
+| **Real Robot (Navigation)** | `remote_launch_nav_rviz.sh` | System time | Not set (real time) |
+
+**Why this matters:**
+- Isaac Sim publishes a `/clock` topic with simulation time
+- RViz must use `ROS_USE_SIM_TIME=true` to sync with simulation clock
+- Real robot uses system time, so RViz uses normal time
+- **These scripts do NOT interfere with each other** - they're for completely separate use cases
+
 **Expected displays:**
 - **Grid** - Reference grid
 - **LaserScan** - LIDAR scan points from `/scan`
@@ -306,7 +322,8 @@ This launches RViz with the universal SLAM configuration that works for both Isa
 **Switching between Isaac Sim and real robot:**
 - Same RViz config works for both (both use `/scan`, `/odom`, `/map` topics)
 - Same TF frame names (map, odom, base_link, laser)
-- Just change `ROS_DOMAIN_ID` if needed
+- Use the appropriate launch script for your use case
+- Set `ROS_DOMAIN_ID=42` for both
 
 **Troubleshooting:**
 

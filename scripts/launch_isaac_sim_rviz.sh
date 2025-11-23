@@ -5,6 +5,7 @@
 # Set ROS domain to match Isaac Sim and real robot
 export ROS_DOMAIN_ID=42
 export ROS_LOCALHOST_ONLY=0
+export ROS_USE_SIM_TIME=true
 
 # Source ROS2
 source /opt/ros/humble/setup.bash
@@ -14,6 +15,7 @@ echo "============================================"
 echo "Launching RViz for Isaac Sim SLAM Mapping"
 echo "============================================"
 echo "ROS_DOMAIN_ID: $ROS_DOMAIN_ID"
+echo "ROS_USE_SIM_TIME: true"
 echo "Expected topics:"
 echo "  - /scan (LIDAR)"
 echo "  - /odom (odometry)"
@@ -21,6 +23,7 @@ echo "  - /map (SLAM map)"
 echo ""
 echo "Make sure Isaac Sim is running with:"
 echo "  - ROS2 Context Domain ID = 42"
+echo "  - ROS2 Publish Clock node (for /clock topic)"
 echo "  - LIDAR publishing to /scan topic"
 echo "  - Simulation playing (Press Play)"
 echo "============================================"

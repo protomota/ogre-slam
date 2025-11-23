@@ -173,9 +173,15 @@ map (from slam_toolbox in mapping OR amcl in navigation)
 - `nav2_params.yaml`: Complete Nav2 stack configuration (planners, controllers, behavior tree)
 
 ### Helper Scripts (scripts/)
-- `launch_mapping_session.sh`: Unified launcher for SLAM + teleop (recommended for mapping)
-- `remote_launch_slam_rviz.sh`: Launch RViz on remote computer for mapping visualization
-- `remote_launch_nav_rviz.sh`: Launch RViz on remote computer for navigation visualization
+- `launch_mapping_session.sh`: Unified launcher for SLAM + teleop (recommended for mapping on real robot)
+- `launch_isaac_sim_rviz.sh`: Launch RViz for Isaac Sim visualization (uses `ROS_USE_SIM_TIME=true`)
+- `remote_launch_slam_rviz.sh`: Launch RViz on remote computer for real robot mapping visualization
+- `remote_launch_nav_rviz.sh`: Launch RViz on remote computer for real robot navigation visualization
+
+**IMPORTANT:** Isaac Sim and real robot use different RViz scripts:
+- **Isaac Sim:** Uses `launch_isaac_sim_rviz.sh` which sets `ROS_USE_SIM_TIME=true` to sync with simulation clock (`/clock` topic)
+- **Real Robot:** Uses `remote_launch_*_rviz.sh` scripts which use system time (real time)
+- These scripts do NOT interfere with each other - they're for completely separate use cases
 
 ## Important Gotchas
 
