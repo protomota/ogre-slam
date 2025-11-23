@@ -239,6 +239,38 @@ export ROS_DOMAIN_ID=42
 ros2 topic list  # Should see Isaac Sim topics when simulation is running
 ```
 
+### ROS2 Keyboard Teleoperation
+
+Control the Isaac Sim robot using standard ROS2 keyboard teleop:
+
+**Install (if not already installed):**
+```bash
+sudo apt install ros-humble-teleop-twist-keyboard
+```
+
+**Launch teleoperation:**
+```bash
+# Set domain to match Isaac Sim and robot
+export ROS_DOMAIN_ID=42
+
+# Run teleop keyboard
+ros2 run teleop_twist_keyboard teleop_twist_keyboard
+```
+
+**Keyboard controls:**
+- **i**: Move forward
+- **,**: Move backward
+- **j**: Rotate left
+- **l**: Rotate right
+- **k**: Stop
+- **Shift + J**: Strafe left (holonomic mode)
+- **Shift + L**: Strafe right (holonomic mode)
+- **u/o/m/.**: Combined forward/backward + rotation
+- **q/z**: Increase/decrease linear speed
+- **w/x**: Increase/decrease angular speed
+
+**Note:** The teleop terminal window must be in focus for keypresses to work.
+
 See `CLAUDE.md` for complete Isaac Sim robot configuration (dimensions, sensors, action graphs).
 
 ## Configuration
