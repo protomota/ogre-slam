@@ -209,7 +209,7 @@ def main():
     # Add maze to ogre.usd
     create_maze_usd(
         maze,
-        cell_size=0.255,      # 25.5cm (wall width)
+        cell_size=0.60,       # 60cm open space (robot can drive through)
         wall_height=0.385,    # 38.5cm tall
         wall_thickness=0.02,  # 2cm thick
         usd_file="/home/brad/ros2_ws/src/ogre-slam/ogre.usd",
@@ -220,12 +220,13 @@ def main():
     print("\n📝 Customization options:")
     print("   Edit the script to change:")
     print("   - Maze size: MazeGenerator(width=8, height=8)")
-    print("   - Cell size: cell_size=0.255")
-    print("   - Wall height: wall_height=0.385")
-    print("   - Wall thickness: wall_thickness=0.02")
+    print("   - Cell size: cell_size=0.60 (60cm paths)")
+    print("   - Wall height: wall_height=0.385 (38.5cm tall)")
+    print("   - Wall thickness: wall_thickness=0.02 (2cm thick)")
     print("   - Position: offset_x=1.0, offset_y=1.0")
     print("   - Random seed: random.seed(42) for reproducible mazes")
     print("\n⚠️  Note: This modifies ogre.usd - make a backup first!")
+    print("💡 Tip: cell_size controls the drivable space, not wall dimensions!")
 
 
 if __name__ == "__main__":

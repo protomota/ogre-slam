@@ -23,11 +23,14 @@ Then reload ogre.usd in Isaac Sim.
 
 ## Default Configuration
 
-- **Maze Size:** 8x8 cells
-- **Wall Dimensions:** 25.5cm wide × 38.5cm tall × 2cm thick
-- **Physical Size:** ~2m × 2m
+- **Maze Size:** 8×8 cells
+- **Cell Size:** 60cm × 60cm (open space for driving)
+- **Wall Dimensions:** 60cm long × 38.5cm tall × 2cm thick
+- **Total Physical Size:** ~4.8m × 4.8m
 - **Position:** Offset (1m, 1m) from origin
 - **Algorithm:** Recursive backtracking (guarantees solution)
+
+**Note:** The 25.5cm is the width of real cardboard pieces. In simulation, each wall segment is scaled to span the full cell edge (60cm).
 
 ## Customization
 
@@ -37,12 +40,12 @@ Edit `scripts/generate_maze.py`:
 # Change maze size
 maze = MazeGenerator(width=10, height=10)  # 10x10 instead of 8x8
 
-# Change wall dimensions
+# Change cell size and wall dimensions
 create_maze_usd(
     maze,
-    cell_size=0.300,       # 30cm cells (bigger)
-    wall_height=0.500,     # 50cm tall walls
-    wall_thickness=0.05,   # 5cm thick walls
+    cell_size=0.80,        # 80cm cells (more space for driving)
+    wall_height=0.385,     # 38.5cm tall (matches real cardboard)
+    wall_thickness=0.02,   # 2cm thick
     offset_x=0.5,          # Position offset X
     offset_y=0.5           # Position offset Y
 )
