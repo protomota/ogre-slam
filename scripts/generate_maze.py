@@ -61,7 +61,7 @@ class MazeGenerator:
 
 
 def create_maze_usd(maze, cell_size=0.255, wall_height=0.385, wall_thickness=0.02,
-                    usd_file="ogre.usd", offset_x=1.0, offset_y=1.0):
+                    usd_file="ogre.usd", maze_x=-3.6, maze_y=-1.3, maze_z=0.6):
     """
     Add maze walls to an existing USD file (or create new one).
 
@@ -71,8 +71,9 @@ def create_maze_usd(maze, cell_size=0.255, wall_height=0.385, wall_thickness=0.0
         wall_height: Height of walls in meters (0.385m = 38.5cm)
         wall_thickness: Thickness of walls in meters (0.02m = 2cm)
         usd_file: USD file to modify (creates if doesn't exist)
-        offset_x: X offset for maze placement (meters)
-        offset_y: Y offset for maze placement (meters)
+        maze_x: X position for maze Xform (meters)
+        maze_y: Y position for maze Xform (meters)
+        maze_z: Z position for maze Xform (meters)
     """
     # Open existing USD stage or create new one
     import os
@@ -83,8 +84,9 @@ def create_maze_usd(maze, cell_size=0.255, wall_height=0.385, wall_thickness=0.0
         print(f"📄 Creating new file: {usd_file}")
         stage = Usd.Stage.CreateNew(usd_file)
 
-    # Create root prim for maze
+    # Create root prim for maze with position
     maze_prim = UsdGeom.Xform.Define(stage, '/Maze')
+    maze_prim.AddTranslateOp().Set(Gf.Vec3d(maze_x, maze_y, maze_z))
 
     # Enable physics scene
     scene = UsdPhysics.Scene.Define(stage, '/physicsScene')
@@ -98,9 +100,9 @@ def create_maze_usd(maze, cell_size=0.255, wall_height=0.385, wall_thickness=0.0
         for x in range(maze.width):
             cell = maze.grid[y][x]
 
-            # Cell center position (with offset)
-            cx = offset_x + x * cell_size
-            cy = offset_y + y * cell_size
+            # Cell center position (relative to maze origin, no offset since Xform handles it)
+            cx = x * cell_size
+            cy = y * cell_size
             cz = wall_height / 2  # Center wall vertically
 
             # North wall (horizontal, along X axis)
@@ -119,8 +121,10 @@ def create_maze_usd(maze, cell_size=0.255, wall_height=0.385, wall_thickness=0.0
                 scale = Gf.Vec3f(cell_size, wall_thickness, wall_height)
                 cube.AddScaleOp().Set(scale)
 
-                # Add collision
+                # Add physics - collision and static rigid body
                 UsdPhysics.CollisionAPI.Apply(cube.GetPrim())
+                rigid_body = UsdPhysics.RigidBodyAPI.Apply(cube.GetPrim())
+                rigid_body.CreateKinematicEnabledAttr(True)  # Static wall, doesn't move
 
             # West wall (horizontal, along Y axis)
             if cell['W']:
@@ -138,8 +142,10 @@ def create_maze_usd(maze, cell_size=0.255, wall_height=0.385, wall_thickness=0.0
                 scale = Gf.Vec3f(wall_thickness, cell_size, wall_height)
                 cube.AddScaleOp().Set(scale)
 
-                # Add collision
+                # Add physics - collision and static rigid body
                 UsdPhysics.CollisionAPI.Apply(cube.GetPrim())
+                rigid_body = UsdPhysics.RigidBodyAPI.Apply(cube.GetPrim())
+                rigid_body.CreateKinematicEnabledAttr(True)  # Static wall, doesn't move
 
     # Add south boundary wall for last row
     y = maze.height - 1
@@ -148,8 +154,8 @@ def create_maze_usd(maze, cell_size=0.255, wall_height=0.385, wall_thickness=0.0
             wall_name = f'/Maze/Wall_{wall_count}'
             wall_count += 1
 
-            cx = offset_x + x * cell_size
-            cy = offset_y + (y + 1) * cell_size
+            cx = x * cell_size
+            cy = (y + 1) * cell_size
             cz = wall_height / 2
 
             cube = UsdGeom.Cube.Define(stage, wall_name)
@@ -162,6 +168,8 @@ def create_maze_usd(maze, cell_size=0.255, wall_height=0.385, wall_thickness=0.0
             cube.AddScaleOp().Set(scale)
 
             UsdPhysics.CollisionAPI.Apply(cube.GetPrim())
+            rigid_body = UsdPhysics.RigidBodyAPI.Apply(cube.GetPrim())
+            rigid_body.CreateKinematicEnabledAttr(True)
 
     # Add east boundary wall for last column
     x = maze.width - 1
@@ -170,8 +178,8 @@ def create_maze_usd(maze, cell_size=0.255, wall_height=0.385, wall_thickness=0.0
             wall_name = f'/Maze/Wall_{wall_count}'
             wall_count += 1
 
-            cx = offset_x + (x + 1) * cell_size
-            cy = offset_y + y * cell_size
+            cx = (x + 1) * cell_size
+            cy = y * cell_size
             cz = wall_height / 2
 
             cube = UsdGeom.Cube.Define(stage, wall_name)
@@ -184,6 +192,8 @@ def create_maze_usd(maze, cell_size=0.255, wall_height=0.385, wall_thickness=0.0
             cube.AddScaleOp().Set(scale)
 
             UsdPhysics.CollisionAPI.Apply(cube.GetPrim())
+            rigid_body = UsdPhysics.RigidBodyAPI.Apply(cube.GetPrim())
+            rigid_body.CreateKinematicEnabledAttr(True)
 
     # Save stage
     stage.GetRootLayer().Save()
@@ -193,8 +203,9 @@ def create_maze_usd(maze, cell_size=0.255, wall_height=0.385, wall_thickness=0.0
     print(f"   Walls: {wall_count}")
     print(f"   Maze size: {maze.width}x{maze.height} cells")
     print(f"   Physical size: {maze.width * cell_size:.2f}m x {maze.height * cell_size:.2f}m")
-    print(f"   Wall dimensions: {cell_size*100:.1f}cm wide x {wall_height*100:.1f}cm tall x {wall_thickness*100:.1f}cm thick")
-    print(f"   Position offset: ({offset_x:.2f}m, {offset_y:.2f}m)")
+    print(f"   Wall dimensions: {cell_size*100:.1f}cm long x {wall_height*100:.1f}cm tall x {wall_thickness*100:.1f}cm thick")
+    print(f"   Maze position: ({maze_x:.2f}m, {maze_y:.2f}m, {maze_z:.2f}m)")
+    print(f"   Physics: ✅ Rigid body collision enabled")
     print(f"\nTo view in Isaac Sim:")
     print(f"   File → Open → {usd_file}")
 
@@ -213,8 +224,9 @@ def main():
         wall_height=0.385,    # 38.5cm tall
         wall_thickness=0.02,  # 2cm thick
         usd_file="/home/brad/ros2_ws/src/ogre-slam/ogre.usd",
-        offset_x=1.0,         # 1m offset from origin
-        offset_y=1.0          # 1m offset from origin
+        maze_x=-3.6,          # Maze Xform position X
+        maze_y=-1.3,          # Maze Xform position Y
+        maze_z=0.6            # Maze Xform position Z
     )
 
     print("\n📝 Customization options:")
@@ -223,10 +235,11 @@ def main():
     print("   - Cell size: cell_size=0.60 (60cm paths)")
     print("   - Wall height: wall_height=0.385 (38.5cm tall)")
     print("   - Wall thickness: wall_thickness=0.02 (2cm thick)")
-    print("   - Position: offset_x=1.0, offset_y=1.0")
+    print("   - Position: maze_x=-3.6, maze_y=-1.3, maze_z=0.6")
     print("   - Random seed: random.seed(42) for reproducible mazes")
     print("\n⚠️  Note: This modifies ogre.usd - make a backup first!")
     print("💡 Tip: cell_size controls the drivable space, not wall dimensions!")
+    print("💡 Physics: Walls have rigid body collision (kinematic mode)")
 
 
 if __name__ == "__main__":

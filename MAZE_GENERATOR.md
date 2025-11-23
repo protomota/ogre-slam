@@ -27,10 +27,11 @@ Then reload ogre.usd in Isaac Sim.
 - **Cell Size:** 60cm × 60cm (open space for driving)
 - **Wall Dimensions:** 60cm long × 38.5cm tall × 2cm thick
 - **Total Physical Size:** ~4.8m × 4.8m
-- **Position:** Offset (1m, 1m) from origin
+- **Position:** Maze Xform at (-3.6m, -1.3m, 0.6m)
+- **Physics:** Rigid body collision with kinematic mode (static walls)
 - **Algorithm:** Recursive backtracking (guarantees solution)
 
-**Note:** The 25.5cm is the width of real cardboard pieces. In simulation, each wall segment is scaled to span the full cell edge (60cm).
+**Note:** Cell size controls the drivable space between walls. Wall segments are scaled to span the full cell edge (60cm long).
 
 ## Customization
 
@@ -46,8 +47,9 @@ create_maze_usd(
     cell_size=0.80,        # 80cm cells (more space for driving)
     wall_height=0.385,     # 38.5cm tall (matches real cardboard)
     wall_thickness=0.02,   # 2cm thick
-    offset_x=0.5,          # Position offset X
-    offset_y=0.5           # Position offset Y
+    maze_x=-2.0,           # Maze Xform position X
+    maze_y=-2.0,           # Maze Xform position Y
+    maze_z=0.0             # Maze Xform position Z (ground level)
 )
 
 # Get same maze every time (reproducible)
@@ -57,10 +59,11 @@ maze = MazeGenerator(width=8, height=8)
 
 ## Features
 
-✅ **Collision Detection** - Walls have physics collision enabled
+✅ **Physics Collision** - Walls have rigid body physics (kinematic mode)
 ✅ **Random Generation** - Different maze each time
 ✅ **Guaranteed Solution** - Always has a path from start to end
 ✅ **Customizable** - Easy to adjust size, dimensions, position
+✅ **Static Walls** - Walls don't move when robot collides
 
 ## Backup & Restore
 
