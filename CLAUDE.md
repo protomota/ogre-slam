@@ -382,13 +382,16 @@ odom
 - This publishes both `/odom` topic AND the `odom→base_link` TF transform
 
 **2. Publish Static Transform (base_link → laser):**
-- Add node: **ROS2 Publish Transform Tree** or **ROS2 Publish Static Transform**
+- Add node: **ROS2 Publish Transform Tree** (with Static Publisher enabled)
 - Configuration:
-  - **parentFrameId**: `base_link`
-  - **childFrameId**: `laser`
-  - **Translation**: (0, 0, 0.30)
-  - **Rotation** (quaternion): (0, 0, 1, 0) ← represents 180° rotation around Z axis
-  - Or **Rotation** (euler XYZ degrees): (0, 0, 180)
+  - **Static Publisher**: True (enables /tf_static publishing)
+  - **Parent Prim**: Path to base_link (e.g., `/World/summit_xl_omni_four/base_link`)
+  - **Target Prims**: Array with laser path (e.g., `["/World/summit_xl_omni_four/laser"]`)
+  - **Topic Name**: `/tf_static`
+
+**Note:** This node reads transform from USD stage. Ensure `laser` Xform in Stage is positioned at:
+  - **Translation** (relative to base_link): (0, 0, 0.17) - laser is 0.17m above base_link center
+  - **Rotation**: 180° around Z axis (RPLIDAR orientation)
 
 **3. Publish LaserScan with correct frame:**
 - In your LIDAR ROS2 publisher node:
