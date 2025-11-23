@@ -28,3 +28,4 @@ Thumbs.db
 # Maps (optional - uncomment to track maps in git)
 # maps/*.pgm
 # maps/*.yaml
+ogre_backup.usd
