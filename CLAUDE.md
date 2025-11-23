@@ -310,47 +310,67 @@ This package includes USD robot models for testing in NVIDIA Isaac Sim 5.0+ befo
 
 ### Robot Physical Dimensions
 
+**⚠️ NOTE:** Two robot models exist:
+- **ogre.usd** - Original tall robot (175mm body, 95mm wheelbase, 205mm track) - UNSTABLE
+- **ogre_stable.usd** - New stable robot (110mm body, 150mm wheelbase, 300mm track) - RECOMMENDED
+
+---
+
+**ogre_stable.usd (Stable Configuration):**
+
 **Body (Main Chassis):**
 - Length (X): 0.20m (200mm)
 - Width (Y): 0.16m (160mm)
-- Height (Z): 0.175m (175mm)
-- Position: 20mm above wheel axle (body bottom at Z=0.06m, center at Z=0.1475m)
-- Mass: ~2.7kg
-
-**Weighted Barrels (Front):**
-- Two cylinders: 55mm diameter × 70mm tall
-- Position: In front of body, flush to base
-  - Left barrel: (0.1275, 0.04, 0.095)
-  - Right barrel: (0.1275, -0.04, 0.095)
-- Mass: 0.355kg each (0.71kg total)
-
-**Battery Pack (Rear):**
-- Dimensions: 55mm (depth) × 160mm (width) × 55mm (height)
-- Position: (-0.1275, 0, 0.0875) - centered, behind body
-- Mass: ~0.71kg (counterweight to barrels)
+- Height (Z): 0.110m (110mm) - 37% LOWER than original
+- Position: 20mm above wheel axle (body bottom at Z=0.06m, center at Z=0.075m)
+- Mass: ~2.5kg (no barrels/battery)
 
 **Overall Robot Footprint:**
-- Total Length: ~310mm (barrel front to battery back)
-- Total Width: 205mm (track width)
-- Total Height: 300mm (to top of LIDAR)
-- Total Mass: ~4.5-5.0kg
+- Total Length: ~385mm (wider wheelbase)
+- Total Width: 300mm (track width) - 46% WIDER
+- Total Height: ~265mm (to top of LIDAR)
+- Total Mass: ~3.5kg (lighter, no top-heavy components)
 
 **Wheels:**
 - Radius: 0.040m (40mm)
 - Width: 0.040m (40mm)
-- Wheelbase: 0.095m (front-to-rear axle distance)
-- Track width: 0.205m (left-to-right wheel center distance)
+- Wheelbase: 0.150m (150mm front-to-rear) - 58% LONGER
+- Track width: 0.300m (300mm left-to-right) - 46% WIDER
 - Mass: ~0.1kg each
 
 **Wheel Positions (relative to base_link at wheel axle height):**
-- Front-Left (FL): (0.0475, 0.1025, 0.04)
-- Front-Right (FR): (0.0475, -0.1025, 0.04)
-- Rear-Left (RL): (-0.0475, 0.1025, 0.04)
-- Rear-Right (RR): (-0.0475, -0.1025, 0.04)
+- Front-Left (FL): (0.075, 0.150, 0.04)
+- Front-Right (FR): (0.075, -0.150, 0.04)
+- Rear-Left (RL): (-0.075, 0.150, 0.04)
+- Rear-Right (RR): (-0.075, -0.150, 0.04)
 
 **LIDAR Mounting:**
-- 65mm posts on top of robot body (represented as 0.05×0.05×0.065m cube at Z=0.2675m)
-- LIDAR frame at Z=0.30m, rotated 180° around Z axis
+- Posts adjusted for shorter body
+- LIDAR frame at Z=0.195m (lower due to shorter body)
+- Or keep at Z=0.30m with taller posts
+- Rotated 180° around Z axis
+
+**Stability Improvements:**
+- Center of gravity 49% lower (147.5mm → 75mm)
+- 58% longer wheelbase for front/back stability
+- 46% wider track for side-to-side stability
+- No top-heavy barrels or battery
+- 22% lighter overall mass
+
+---
+
+**ogre.usd (Original - For Reference Only):**
+
+**Body:** 200×160×175mm, center at Z=0.1475m, mass 2.7kg
+**Weighted Barrels:** Two 55mm×70mm cylinders, 0.71kg total
+**Battery Pack:** 55mm×160mm×55mm, 0.71kg
+**Wheelbase:** 95mm, **Track:** 205mm
+**Total Mass:** 4.5-5.0kg
+**Wheel Positions:**
+- FL: (0.0475, 0.1025, 0.04)
+- FR: (0.0475, -0.1025, 0.04)
+- RL: (-0.0475, 0.1025, 0.04)
+- RR: (-0.0475, -0.1025, 0.04)
 
 **Camera Mounting:**
 - Isaac Sim: `front_camera` frame at (0.15, 0, 0.10) - 15cm forward, 10cm above base_link

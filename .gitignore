@@ -28,4 +28,11 @@ Thumbs.db
 # Maps (optional - uncomment to track maps in git)
 # maps/*.pgm
 # maps/*.yaml
+
+# USD files
 ogre_backup.usd
+ogre-*.usd
+ogre_NEW.usd
+
+# RViz auto-generated configs (root directory only)
+/ogre.rviz
