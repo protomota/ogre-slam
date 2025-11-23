@@ -13,7 +13,7 @@ import os
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription
-from launch.conditions import IfCondition
+from launch.conditions import IfCondition, UnlessCondition
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node
@@ -150,11 +150,13 @@ def generate_launch_description():
 
     # 8. Static transform: base_link → laser (LIDAR position on robot)
     # LIDAR is mounted at center of robot, 270mm above ground, rotated 180° (inverted)
+    # Note: For Isaac Sim, this TF is provided by the action graph, so we disable it when use_sim_time=true
     static_tf_laser = Node(
         package='tf2_ros',
         executable='static_transform_publisher',
         name='base_to_laser_broadcaster',
-        arguments=['0.0', '0.0', '0.27', '0.0', '0.0', '3.14159', 'base_link', 'laser']
+        arguments=['0.0', '0.0', '0.27', '0.0', '0.0', '3.14159', 'base_link', 'laser'],
+        condition=UnlessCondition(use_sim_time)
     )
 
     # 8. RViz

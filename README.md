@@ -357,11 +357,13 @@ ros2 launch ogre_slam mapping.launch.py \
 ```
 
 **Important flags:**
-- `use_sim_time:=true` - Use Isaac Sim's simulation clock
+- `use_sim_time:=true` - Use Isaac Sim's simulation clock (also disables conflicting static TF publisher)
 - `use_odometry:=false` - Don't run encoder-based odometry (Isaac Sim provides `/odom`)
 - `use_ekf:=false` - Don't run EKF (Isaac Sim odometry is already clean, unlike real robot encoders)
 - `use_teleop:=false` - Don't launch ogre_teleop (not needed for sim)
 - `use_rviz:=true` - Launch RViz for visualization (or use `launch_isaac_sim_rviz.sh` separately)
+
+**Note:** The launch file automatically disables the static `base_link→laser` TF publisher when `use_sim_time:=true`, since Isaac Sim provides this transform with proper timestamps.
 
 **Drive the robot:**
 
