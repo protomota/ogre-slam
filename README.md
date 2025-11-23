@@ -339,9 +339,41 @@ Key parameters:
 
 ### EKF Sensor Fusion
 
-Edit `config/ekf_params.yaml`:
+**EKF (Extended Kalman Filter)** combines multiple noisy sensor measurements to produce accurate state estimates.
 
-The EKF fuses wheel odometry to smooth out noise from 2 PPR encoders.
+**Why This Robot Needs EKF:**
+
+The 2 PPR Hall sensors provide very coarse encoder resolution, resulting in:
+- Noisy velocity measurements
+- Jittery odometry output
+- Poor SLAM performance without filtering
+
+**How EKF Works:**
+
+The `robot_localization` package implements a two-step process:
+
+1. **Predict**: Estimates robot state based on motion model (wheel velocities)
+2. **Update**: Corrects prediction using sensor measurements with confidence weighting
+
+**Data Flow:**
+```
+Raw Encoders → odometry_node → /odom (noisy)
+                                   ↓
+                            ekf_filter_node (smoothing)
+                                   ↓
+                          /odometry/filtered (clean)
+                                   ↓
+                        SLAM & Nav2 (accurate mapping/navigation)
+```
+
+**Configuration:**
+
+Edit `config/ekf_params.yaml` to:
+- Add additional sensors (IMU recommended for production)
+- Tune covariance values for sensor noise characteristics
+- Configure which state variables to fuse (position, velocity, orientation)
+
+The EKF is **essential** for this robot - without it, the 2 PPR encoders produce unusable odometry.
 
 ## Package Structure
 
