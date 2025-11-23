@@ -27,7 +27,7 @@ Then reload ogre.usd in Isaac Sim.
 - **Cell Size:** 60cm × 60cm (open space for driving)
 - **Wall Dimensions:** 60cm long × 38.5cm tall × 2cm thick
 - **Total Physical Size:** 3.0m × 3.0m
-- **Position:** Centered at origin (0, 0, 0) with open center cell
+- **Position:** Centered at (-1.5m, -1.5m, 0.6m) with open center cell
 - **Physics:** Rigid body collision with kinematic mode (static walls)
 - **Algorithm:** Recursive backtracking (guarantees solution)
 

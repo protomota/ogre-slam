@@ -237,7 +237,7 @@ def main():
         usd_file="/home/brad/ros2_ws/src/ogre-slam/ogre.usd",
         maze_x=center_offset, # Centered X (-1.5m)
         maze_y=center_offset, # Centered Y (-1.5m)
-        maze_z=0.0            # Ground level
+        maze_z=0.6            # Wall base at 60cm height
     )
 
     print("\n📝 Customization options:")
