@@ -434,10 +434,13 @@ If your robot exhibits bouncing, flipping, or unstable behavior in Isaac Sim, th
 - Default Maximum Velocity on RevoluteJoints is often 1000000 (1 million!)
 - This allows wheels to spin out of control, causing physics chaos and instability
 - **This is the most common cause of Isaac Sim mecanum wheel bouncing**
+- Too low Maximum Velocity prevents proper mecanum wheel slip behavior
 
 **Solution:**
 - For each wheel RevoluteJoint: **Property → Physics → Revolute Joint → Drive → Angular**
-  - **Maximum Velocity:** **100** (NOT 1000000!) - This is the critical fix!
+  - **Maximum Velocity:** **10000** (NOT 1000000!) - This is the critical fix!
+    - Allows proper mecanum wheel slip while maintaining stability
+    - Too low (e.g., 100) prevents wheels from slipping correctly
   - **Damping:** 1.0-10.0 (NOT 0!)
   - **Stiffness:** 0
   - **Max Force:** 100-1000 (tune for stability)
@@ -472,7 +475,7 @@ If your robot exhibits bouncing, flipping, or unstable behavior in Isaac Sim, th
 
 #### Diagnostic Steps
 
-1. **Check Maximum Velocity (FIX THIS FIRST!):** Verify all wheel joints have Maximum Velocity = 100 (NOT 1000000)
+1. **Check Maximum Velocity (FIX THIS FIRST!):** Verify all wheel joints have Maximum Velocity = 10000 (NOT 1000000)
 2. **Check for overlaps:** Enable collision visualization and look for red overlaps
 3. **Increase damping:** Set joint damping to 5-10 if currently low/zero
 4. **Simplify collision:** Use boundingCube approximation on wheels, disable roller collision
@@ -481,7 +484,8 @@ If your robot exhibits bouncing, flipping, or unstable behavior in Isaac Sim, th
 
 #### Quick Fix Checklist
 
-- ✅ **MOST IMPORTANT:** Wheel joints Maximum Velocity set to **100** (NOT 1000000!)
+- ✅ **MOST IMPORTANT:** Wheel joints Maximum Velocity set to **10000** (NOT 1000000!)
+  - Allows proper mecanum wheel slip while maintaining stability
 - ✅ Wheel joints have damping ≥ 1.0
 - ✅ No red collision overlaps visible at rest
 - ✅ Wheel collision approximation set to "boundingCube" or "boundingSphere"
