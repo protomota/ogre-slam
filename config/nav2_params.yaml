@@ -89,28 +89,28 @@ controller_server:
     FollowPath:
       plugin: "dwb_core::DWBLocalPlanner"
       debug_trajectory_details: True
-      min_vel_x: -0.3  # Negative = can drive backwards
-      min_vel_y: -0.3  # Mecanum can strafe
-      max_vel_x: 0.3   # 0.3 m/s forward (conservative for indoor)
-      max_vel_y: 0.3   # 0.3 m/s strafe
-      max_vel_theta: 1.0  # 1.0 rad/s rotation
+      min_vel_x: -8.0  # Negative = can drive backwards
+      min_vel_y: -8.0  # Mecanum can strafe
+      max_vel_x: 8.0   # 8.0 m/s forward (VERY FAST for Isaac Sim)
+      max_vel_y: 8.0   # 8.0 m/s strafe
+      max_vel_theta: 8.0  # 8.0 rad/s rotation (very fast turning)
       min_speed_xy: 0.0
-      max_speed_xy: 0.4
+      max_speed_xy: 10.0  # Increased to 10.0 m/s
       min_speed_theta: 0.0
 
       # Acceleration limits (mecanum is responsive)
-      acc_lim_x: 2.5
-      acc_lim_y: 2.5
-      acc_lim_theta: 3.2
-      decel_lim_x: -2.5
-      decel_lim_y: -2.5
-      decel_lim_theta: -3.2
+      acc_lim_x: 10.0  # High acceleration
+      acc_lim_y: 10.0
+      acc_lim_theta: 10.0
+      decel_lim_x: -10.0
+      decel_lim_y: -10.0
+      decel_lim_theta: -10.0
 
       # Path/goal tolerances
       vx_samples: 20
       vy_samples: 10  # Mecanum can strafe
       vtheta_samples: 20
-      sim_time: 1.7
+      sim_time: 0.8  # Reduced from 1.7 for faster reactions
       linear_granularity: 0.05
       angular_granularity: 0.025
       transform_tolerance: 0.2
@@ -308,10 +308,10 @@ velocity_smoother:
     smoothing_frequency: 20.0
     scale_velocities: False
     feedback: "OPEN_LOOP"
-    max_velocity: [0.3, 0.3, 1.0]  # [vx, vy, vtheta]
-    min_velocity: [-0.3, -0.3, -1.0]
-    max_accel: [2.5, 2.5, 3.2]
-    max_decel: [-2.5, -2.5, -3.2]
+    max_velocity: [8.0, 8.0, 8.0]  # [vx, vy, vtheta] - VERY FAST for Isaac Sim
+    min_velocity: [-8.0, -8.0, -8.0]
+    max_accel: [10.0, 10.0, 10.0]
+    max_decel: [-10.0, -10.0, -10.0]
     odom_topic: "odom"
     odom_duration: 0.1
     deadband_velocity: [0.0, 0.0, 0.0]
