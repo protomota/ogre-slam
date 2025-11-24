@@ -21,21 +21,27 @@ cd ~/ros2_ws/src/ogre-slam
 
 Then reload ogre.usd in Isaac Sim.
 
-## Default Configuration
+## Default Configuration (Wide Maze for Nav2)
 
-- **Maze Size:** 5×5 cells (smaller, easier to map)
-- **Cell Size:** 60cm × 60cm (open space for driving)
-- **Wall Dimensions:** 60cm long × 100cm tall × 2cm thick
-- **Total Physical Size:** 3.0m × 3.0m
-- **Position:** Centered at (-1.5m, -1.5m, 0.6m) with open center cell
+- **Maze Size:** 4×4 cells (smaller grid, WIDER corridors)
+- **Cell Size:** 1.5m × 1.5m (HUGE clearance for fast autonomous navigation!)
+- **Wall Dimensions:** 1.5m long × 1.0m tall × 2cm thick
+- **Total Physical Size:** 6.0m × 6.0m
+- **Position:** Centered at (-3.0m, -3.0m, 0.6m) with 4-cell open center
 - **Physics:** Rigid body collision with kinematic mode (static walls)
 - **Algorithm:** Recursive backtracking (guarantees solution)
 
-**Note:** The center cell (2,2) is always cleared to provide an open starting area for the robot. Cell size controls the drivable space between walls.
+**Note:** The 4 center cells (1,1), (1,2), (2,1), (2,2) are always cleared to provide a large open starting area for the robot.
 
-**Robot Fit:** Designed for 205mm×95mm robot (diagonal 226mm). Cell size provides 374mm clearance for comfortable mecanum omnidirectional navigation.
+**Robot Fit:** Designed for 205mm×95mm robot (diagonal 226mm). Cell size provides **1274mm clearance** (5.6× robot diagonal) for comfortable high-speed autonomous navigation with Nav2.
 
-**Alternative:** For wider robot configuration (340mm track), see `OGRE_WIDE.md` for 80cm cell size.
+**Why So Wide?**
+- Nav2's DWB controller needs room for trajectory planning
+- 1.5m corridors allow robot to navigate at 8 m/s without obstacle avoidance interference
+- Wide corridors prevent conservative behavior from inflation layer
+- Perfect for testing autonomous navigation algorithms at high speeds
+
+**Previous Configuration:** 5×5 cells with 0.6m size (3.0m × 3.0m total, 374mm clearance) - too narrow for aggressive Nav2 settings.
 
 ## Customization
 
@@ -140,9 +146,9 @@ cp ogre_backup.usd ogre.usd
 ---
 
 **Tips:**
-- Start with default 5x5 maze for testing (3m × 3m)
-- Smaller mazes (3x3) map faster but less interesting
-- Larger mazes (8x8+) test SLAM loop closure
-- Cell size 60cm fits 205mm robot with 374mm clearance
-- For wider robot (340mm track), use 80cm cells (see OGRE_WIDE.md)
-- Thin walls (2cm) match real cardboard
+- Start with default 4×4 wide maze for Nav2 testing (6m × 6m)
+- 1.5m cell size provides 1274mm clearance for fast autonomous navigation
+- Wider corridors prevent Nav2 from being overly conservative
+- Smaller grid (4×4) maps quickly in Isaac Sim
+- For slower navigation/tighter spaces, reduce cell_size to 0.6m-1.0m
+- Thin walls (2cm) match real cardboard for realistic collision testing

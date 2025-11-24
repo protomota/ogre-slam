@@ -257,12 +257,43 @@ Shared costmap settings:
 
 ### If Robot is Too Cautious (won't go through narrow gaps)
 
-Edit `/home/jetson/ros2_ws/src/ogre-slam/config/costmap_common_params.yaml`:
+**Current Aggressive Settings (Optimized for Wide Maze):**
+
+Edit `/home/jetson/ros2_ws/src/ogre-slam/config/nav2_params.yaml`:
 
 ```yaml
-footprint_padding: 0.01  # Reduce from 0.05
-inflation_layer:
-  inflation_radius: 0.45  # Reduce from 0.55
+local_costmap:
+  local_costmap:
+    inflation_layer:
+      inflation_radius: 0.15      # Reduced from 0.55 - minimal safety margin
+      cost_scaling_factor: 10.0   # High value = steep cost gradient
+
+global_costmap:
+  global_costmap:
+    inflation_radius: 0.15        # Same as local
+    cost_scaling_factor: 10.0
+
+FollowPath:
+  BaseObstacle.scale: 0.01        # Very low - less afraid of obstacles
+  PathAlign.scale: 10.0           # Reduced from 32 - less strict path following
+  GoalAlign.scale: 10.0           # Reduced from 24
+  PathDist.scale: 16.0            # Reduced from 32
+  GoalDist.scale: 12.0            # Reduced from 24
+  RotateToGoal.scale: 10.0        # Reduced from 32
+  RotateToGoal.slowing_factor: 2.0  # Reduced from 5 - less slowing near goal
+  sim_time: 0.5                   # Short trajectory lookahead for aggressive driving
+```
+
+**Why So Aggressive?**
+- 1.5m wide corridors provide 1274mm clearance (5.6× robot diagonal)
+- Minimal inflation (0.15m) prevents unnecessary path rejections
+- Low critic weights allow faster, more direct navigation
+- Optimized for Isaac Sim testing where safety is less critical
+
+**For Real Robot in Tight Spaces:** Increase safety margins:
+```yaml
+  inflation_radius: 0.55  # More conservative
+  BaseObstacle.scale: 0.10  # More obstacle avoidance
 ```
 
 ### If Robot Gets Too Close to Obstacles
@@ -272,14 +303,37 @@ robot_radius: 0.25  # Increase from 0.20
 inflation_radius: 0.65  # Increase from 0.55
 ```
 
-### If Robot Moves Too Slowly
+### Velocity Configuration (Isaac Sim vs Real Robot)
+
+**Current Settings (Optimized for Isaac Sim):**
 
 Edit `/home/jetson/ros2_ws/src/ogre-slam/config/nav2_params.yaml`:
 
 ```yaml
-DWBLocalPlanner:
-  max_vel_x: 0.5  # Increase from 0.3
-  max_vel_theta: 1.5  # Increase from 1.0
+FollowPath:
+  max_vel_x: 8.0         # 8 m/s forward (VERY FAST for Isaac Sim)
+  max_vel_y: 8.0         # 8 m/s strafe (mecanum omnidirectional)
+  max_vel_theta: 8.0     # 8 rad/s rotation
+  max_speed_xy: 10.0     # Combined linear speed limit
+  acc_lim_x: 10.0        # High acceleration for responsive control
+  acc_lim_y: 10.0
+  acc_lim_theta: 10.0
+
+velocity_smoother:
+  max_velocity: [8.0, 8.0, 8.0]  # [vx, vy, vtheta]
+```
+
+**Why 8 m/s?**
+- Isaac Sim physics can handle high velocities
+- Mecanum wheels in simulation need high max velocity (10,000 in joint settings) to slip properly
+- Wide 1.5m corridors allow safe high-speed navigation
+- DWB controller will limit actual speed based on obstacles
+
+**For Real Robot:** Reduce to 0.3-0.5 m/s for safety:
+```yaml
+  max_vel_x: 0.5
+  max_vel_y: 0.5
+  max_vel_theta: 1.0
 ```
 
 ### If Path Planning Fails Often

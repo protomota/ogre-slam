@@ -312,25 +312,110 @@ Languages:
 - Incorrect dimensions → poor odometry
 - See `config/odometry_params.yaml`
 
+## Nav2 Autonomous Navigation (✅ COMPLETED - November 2025)
+
+### What Was Added
+
+**Complete autonomous navigation system with obstacle avoidance:**
+
+**Files Created/Modified:**
+- `launch/navigation.launch.py` (356 lines)
+  - Full Nav2 stack integration
+  - AMCL particle filter localization
+  - Conditional sensor launching (real robot vs Isaac Sim)
+  - Map server + Nav2 lifecycle management
+
+- `config/nav2_params.yaml` (319 lines)
+  - DWB local planner for mecanum drive
+  - NavFn global planner (Dijkstra)
+  - Aggressive settings for Isaac Sim (8 m/s velocities)
+  - Behavior tree configuration
+  - Costmap parameters (LIDAR + RealSense fusion)
+
+- `config/amcl_params.yaml` (87 lines)
+  - Particle filter localization
+  - Motion model for mecanum drive
+  - Laser likelihood field model
+
+- `rviz/navigation.rviz` (342 lines)
+  - Nav2 visualization setup
+  - Particle cloud, costmaps, paths
+  - Goal setting tools
+
+- `scripts/generate_maze.py` (267 lines)
+  - Wide maze generator for Nav2 testing
+  - 4×4 cells with 1.5m corridors
+  - 6.0m × 6.0m total size
+  - Isaac Sim USD integration
+
+**Key Features:**
+- ✅ Autonomous waypoint navigation
+- ✅ 3D obstacle avoidance (RealSense pointcloud)
+- ✅ AMCL localization with saved maps
+- ✅ Isaac Sim integration for testing
+- ✅ Aggressive navigation (8 m/s in simulation)
+- ✅ Wide maze environment (1274mm clearance)
+
+### Configuration Highlights
+
+**Isaac Sim Optimizations:**
+- Max velocity: 8.0 m/s (linear and angular)
+- Max acceleration: 10.0 m/s²
+- Inflation radius: 0.15m (minimal safety margin)
+- Trajectory sim time: 0.5s (aggressive planning)
+- DWB critic weights reduced 50-70%
+
+**Wide Maze Design:**
+- 4×4 cells (smaller grid, faster mapping)
+- 1.5m × 1.5m cell size (5.6× robot diagonal clearance)
+- 6.0m × 6.0m total maze size
+- Prevents conservative Nav2 behavior
+
+### Known Issues & Solutions
+
+**Issue:** Robot was initially very slow (0.05 m/s)
+**Cause:** Nav2 DWB controller being overly conservative
+**Solution:**
+- Reduced inflation radius: 0.55m → 0.15m
+- Increased cost_scaling_factor: 3.0 → 10.0
+- Reduced DWB critic weights
+- Generated wider maze (1.5m corridors)
+
+**Issue:** Isaac Sim not publishing /odom
+**Cause:** Simulation not running or action graph not configured
+**Solution:** Verify Isaac Sim is playing and action graph publishes odometry
+
+### Testing Results
+
+✅ Complete autonomous navigation working in Isaac Sim
+✅ 8 m/s velocity achieved in wide corridors
+✅ Smooth path planning and following
+✅ Real-time obstacle avoidance
+✅ Proper AMCL localization
+
 ## Future Enhancements
 
 ### Short Term (Next Iteration)
-- [ ] Add localization-only launch file (use saved maps)
+- [x] Add localization-only launch file (use saved maps) - ✅ DONE
+- [x] Nav2 integration for autonomous navigation - ✅ DONE
+- [ ] Test Nav2 on real robot hardware
 - [ ] Test with different RPLIDAR models (A2, A3)
 - [ ] Calibration script for wheel dimensions
 - [ ] Encoder tick validation/diagnostic tool
 
 ### Medium Term
 - [ ] IMU integration for better orientation
-- [ ] Nav2 integration for autonomous navigation
-- [ ] Waypoint following
-- [ ] Obstacle avoidance using RealSense depth
+- [x] Waypoint following - ✅ DONE (Nav2)
+- [x] Obstacle avoidance using RealSense depth - ✅ DONE (Nav2 costmaps)
+- [ ] Multi-waypoint missions with path recording
+- [ ] Dynamic obstacle prediction
 
 ### Long Term
 - [ ] Wall-following algorithm for maze solving
 - [ ] Multi-floor mapping
 - [ ] Visual SLAM integration (RealSense)
 - [ ] Machine learning for navigation optimization
+- [ ] AprilTag docking for precision navigation
 
 ## Deployment Instructions
 

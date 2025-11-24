@@ -218,49 +218,48 @@ def create_maze_usd(maze, cell_size=0.255, wall_height=0.385, wall_thickness=0.0
 
 def main():
     """Generate maze and add to ogre.usd file."""
-    print("🏗️  Generating 5x5 maze for Project Ogre...")
+    print("🏗️  Generating 4x4 WIDE maze for Nav2 testing...")
 
-    # Generate maze (start from center for open middle)
+    # Generate smaller maze with wider corridors
     random.seed()  # Random each time
-    maze = MazeGenerator(width=5, height=5)
+    maze = MazeGenerator(width=4, height=4)
 
-    # Clear center cell walls to ensure open space for robot start
-    center = 2  # Center of 5x5 is index 2
-    maze.grid[center][center] = {'N': False, 'S': False, 'E': False, 'W': False}
+    # Clear center cells to ensure large open space for robot start
+    # For 4x4, clear all 4 center cells
+    maze.grid[1][1] = {'N': False, 'S': False, 'E': False, 'W': False}
+    maze.grid[1][2] = {'N': False, 'S': False, 'E': False, 'W': False}
+    maze.grid[2][1] = {'N': False, 'S': False, 'E': False, 'W': False}
+    maze.grid[2][2] = {'N': False, 'S': False, 'E': False, 'W': False}
 
     # Calculate centered position
     # Robot: 205mm wide × 95mm long (diagonal: 226mm)
-    # Cell size: 0.60m = 600mm (374mm clearance for diagonal movement)
-    # 5 cells × 0.6m = 3.0m total maze size
-    # To center at origin: offset by -half_size = -1.5m
-    maze_size = 5 * 0.60  # 3.0m
-    center_offset = -maze_size / 2  # -1.5m
+    # Cell size: 1.5m = 1500mm (HUGE clearance for fast navigation!)
+    # 4 cells × 1.5m = 6.0m total maze size
+    # To center at origin: offset by -half_size = -3.0m
+    maze_size = 4 * 1.5  # 6.0m
+    center_offset = -maze_size / 2  # -3.0m
 
-    # Add maze to ogre.usd (current robot configuration)
+    # Add maze to ogre.usd (wide corridors for Nav2)
     create_maze_usd(
         maze,
-        cell_size=0.60,       # 60cm open space (comfortable for 205mm wide robot)
+        cell_size=1.5,        # 1.5m WIDE corridors (plenty of room!)
         wall_height=1.00,     # 100cm tall (1 meter - excellent LIDAR visibility)
         wall_thickness=0.02,  # 2cm thick
         usd_file="/home/brad/ros2_ws/src/ogre-slam/ogre.usd",
-        maze_x=center_offset, # Centered X (-1.5m)
-        maze_y=center_offset, # Centered Y (-1.5m)
+        maze_x=center_offset, # Centered X (-3.0m)
+        maze_y=center_offset, # Centered Y (-3.0m)
         maze_z=0.6            # Wall base at 60cm height
     )
 
-    print("\n📝 Customization options:")
-    print("   Edit the script to change:")
-    print("   - Maze size: MazeGenerator(width=5, height=5)")
-    print("   - Cell size: cell_size=0.60 (60cm paths for 205mm robot)")
-    print("   - Wall height: wall_height=1.00 (100cm/1m tall)")
-    print("   - Wall thickness: wall_thickness=0.02 (2cm thick)")
-    print("   - Position: Auto-centered at origin with open center")
-    print("   - Random seed: random.seed(42) for reproducible mazes")
+    print("\n📝 Wide Maze Configuration:")
+    print("   - Maze size: 4×4 cells (smaller but WIDER)")
+    print("   - Cell size: 1.5m × 1.5m (2.5x wider than before!)")
+    print("   - Total size: 6.0m × 6.0m")
+    print("   - Clearance: 1274mm (5.6x robot diagonal!)")
+    print("   - Center: 4 cells cleared for large starting area")
     print("\n⚠️  Note: This modifies ogre.usd - make a backup first!")
-    print("💡 Tip: Center cell is always clear for robot starting position")
-    print("💡 Robot: 205mm×95mm (diagonal 226mm) fits with 374mm clearance")
-    print("💡 Physics: Walls have rigid body collision (kinematic mode)")
-    print("💡 For wider robot: See OGRE_WIDE.md for 80cm cell configuration")
+    print("💡 Tip: Wide corridors allow Nav2 to drive fast and turn easily")
+    print("💡 Perfect for testing autonomous navigation at high speeds")
 
 
 if __name__ == "__main__":
