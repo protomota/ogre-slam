@@ -430,17 +430,26 @@ If your robot exhibits bouncing, flipping, or unstable behavior in Isaac Sim, th
 - Check: **Property → Physics → Rigid Body → Mass**
 - Ensure inertia tensors are computed from actual geometry (not default values)
 
-**3. Insufficient Joint Damping**
-- Missing or low damping on wheel joints causes oscillations
-- Too high stiffness can cause divergence
+**3. Excessive Maximum Velocity (CRITICAL - COMMON ISSUE)**
+- Default Maximum Velocity on RevoluteJoints is often 1000000 (1 million!)
+- This allows wheels to spin out of control, causing physics chaos and instability
+- **This is the most common cause of Isaac Sim mecanum wheel bouncing**
 
 **Solution:**
 - For each wheel RevoluteJoint: **Property → Physics → Revolute Joint → Drive → Angular**
+  - **Maximum Velocity:** **100** (NOT 1000000!) - This is the critical fix!
   - **Damping:** 1.0-10.0 (NOT 0!)
   - **Stiffness:** 0
   - **Max Force:** 100-1000 (tune for stability)
 
-**4. Poor Friction Parameters**
+**4. Insufficient Joint Damping**
+- Missing or low damping on wheel joints causes oscillations
+- Too high stiffness can cause divergence
+
+**Solution:**
+- Apply damping values as listed above (1.0-10.0)
+
+**5. Poor Friction Parameters**
 - Mecanum wheels need balanced lateral and longitudinal friction
 - Mismatched coefficients cause force buildup and "popping"
 
@@ -450,7 +459,7 @@ If your robot exhibits bouncing, flipping, or unstable behavior in Isaac Sim, th
   - **Dynamic Friction:** 0.6-0.8
 - Ground plane: Match or slightly lower friction values
 
-**5. Physics Timestep Issues**
+**6. Physics Timestep Issues**
 - Too large timestep makes contacts unstable
 - Insufficient solver iterations can't handle articulated complexity
 
@@ -463,19 +472,20 @@ If your robot exhibits bouncing, flipping, or unstable behavior in Isaac Sim, th
 
 #### Diagnostic Steps
 
-1. **Check for overlaps:** Enable collision visualization and look for red overlaps
-2. **Simplify collision:** Use boundingCube approximation on wheels, disable roller collision
-3. **Verify masses:** Check all rigid bodies have realistic mass values
-4. **Increase damping:** Set joint damping to 5-10 if currently low/zero
-5. **Raise robot:** If wheels at Z=radius, raise by 5-10mm to avoid ground penetration
+1. **Check Maximum Velocity (FIX THIS FIRST!):** Verify all wheel joints have Maximum Velocity = 100 (NOT 1000000)
+2. **Check for overlaps:** Enable collision visualization and look for red overlaps
+3. **Increase damping:** Set joint damping to 5-10 if currently low/zero
+4. **Simplify collision:** Use boundingCube approximation on wheels, disable roller collision
+5. **Verify masses:** Check all rigid bodies have realistic mass values
 6. **Increase solver quality:** Set position iterations to 8, velocity to 2
 
 #### Quick Fix Checklist
 
-- ✅ Wheel collision approximation set to "boundingCube" or "boundingSphere"
-- ✅ All 28 passive rollers have collision disabled
+- ✅ **MOST IMPORTANT:** Wheel joints Maximum Velocity set to **100** (NOT 1000000!)
 - ✅ Wheel joints have damping ≥ 1.0
 - ✅ No red collision overlaps visible at rest
+- ✅ Wheel collision approximation set to "boundingCube" or "boundingSphere"
+- ✅ All 28 passive rollers have collision disabled
 - ✅ Physics scene position iterations ≥ 8
 - ✅ Wheels not penetrating ground (Z position = wheel radius + 5-10mm clearance)
 
