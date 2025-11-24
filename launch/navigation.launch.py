@@ -21,7 +21,7 @@ import os
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription, OpaqueFunction
-from launch.conditions import IfCondition
+from launch.conditions import IfCondition, UnlessCondition
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration, PathJoinSubstitution, PythonExpression
 from launch_ros.actions import Node
@@ -116,14 +116,22 @@ def generate_launch_description():
         description='Use robot_localization EKF for sensor fusion'
     )
 
+    use_sim_time_arg = DeclareLaunchArgument(
+        'use_sim_time',
+        default_value='false',
+        description='Use simulation time (true for Isaac Sim, false for real robot)'
+    )
+
     # Launch configurations
     map_file = LaunchConfiguration('map')
+    use_sim_time = LaunchConfiguration('use_sim_time')
     use_rviz = LaunchConfiguration('use_rviz')
     rplidar_model = LaunchConfiguration('rplidar_model')
     use_odometry = LaunchConfiguration('use_odometry')
     use_ekf = LaunchConfiguration('use_ekf')
 
     # 1. RPLIDAR launch (2D laser scanner)
+    # NOTE: Only launch for real robot - Isaac Sim provides /scan directly
     rplidar_launch = IncludeLaunchDescription(
         PythonLaunchDescriptionSource([
             PathJoinSubstitution([
@@ -133,7 +141,8 @@ def generate_launch_description():
             '/rplidar_',
             rplidar_model,
             '_launch.py'
-        ])
+        ]),
+        condition=UnlessCondition(use_sim_time)  # Skip if using simulation time
     )
 
     # 2. RealSense D435 launch (3D depth camera with pointcloud)
@@ -314,6 +323,7 @@ def generate_launch_description():
         rplidar_model_arg,
         use_odometry_arg,
         use_ekf_arg,
+        use_sim_time_arg,
 
         # Static TF transforms
         static_tf_camera,

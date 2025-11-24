@@ -415,29 +415,39 @@ ros2 run tf2_tools view_frames
 
 Without proper TF publishing, RViz will show errors like "frame 'laser' does not exist" or drop messages.
 
-### Mecanum Drive Action Graph Setup
+### Mecanum Drive Action Graph Setup (/cmd_vel Subscriber)
 
-The Isaac Sim robot uses an action graph for keyboard teleop with proper mecanum kinematics:
+The Isaac Sim robot requires an action graph to subscribe to `/cmd_vel` and control the wheels. This enables:
+- ✅ Nav2 autonomous navigation
+- ✅ ROS2 keyboard teleop (`teleop_twist_keyboard`)
+- ✅ Web-based teleop (ogre_teleop)
+- ✅ Any ROS2 node publishing Twist messages
 
-**Keyboard Controls:**
-- W/S: Forward/backward (vx)
-- A/D: Rotate left/right (vtheta)
-- Q/E: Strafe left/right (vy)
+**Action Graph Nodes:**
+1. **On Playback Tick** (trigger)
+2. **ROS2 Subscribe Twist** → Topic: `/cmd_vel`, Queue Size: 10
+3. **Break 3-Vector** (linear) → Outputs: x (vx), y (vy), z (unused)
+4. **Break 3-Vector** (angular) → Outputs: x (unused), y (unused), z (vtheta)
+5. **Math Nodes** → Compute mecanum wheel velocities (see equations below)
+6. **Multiply Nodes** → Negate right wheel velocities: `wheel_fr * -1`, `wheel_rr * -1`
+7. **Make Array** → Order: `[wheel_fl, -wheel_fr, wheel_rl, -wheel_rr]`
+8. **Articulation Controller** → Apply velocities to joints
 
-**Mecanum Wheel Equations:**
+**Mecanum Wheel Equations (for ogre.usd):**
 ```
-wheel_fl = vx - vy - vtheta_L
-wheel_fr = vx + vy + vtheta_L
-wheel_rl = vx + vy - vtheta_L
-wheel_rr = vx - vy + vtheta_L
+L = (wheelbase + trackwidth) / 2 = (0.095 + 0.205) / 2 = 0.15
+
+wheel_fl =  (vx - vy - vtheta * L)      # fl_joint (left front)
+wheel_fr = -(vx + vy + vtheta * L)      # fr_joint (right front, NEGATED)
+wheel_rl =  (vx + vy - vtheta * L)      # rl_joint (left rear)
+wheel_rr = -(vx - vy + vtheta * L)      # rr_joint (right rear, NEGATED)
 ```
-Where L = (wheelbase + trackwidth) / 2
 
 **Important Notes:**
-- Joint names must match robot exactly (e.g., `wheel_joint_fl`, `wheel_joint_fr`, etc.)
-- Velocity array order must match joint names array order in Articulation Controller
-- For prebuilt robots, check actual articulation path (e.g., `/World/summit_xl_omni_four`)
-- Wheel negations depend on physical wheel orientation - test and adjust if motion is inverted
+- **Joint names for ogre.usd:** `fl_joint`, `fr_joint`, `rl_joint`, `rr_joint`
+- Velocity array order must match joint names array order in Articulation Controller: `["fl_joint", "fr_joint", "rl_joint", "rr_joint"]`
+- **Right wheels (fr_joint, rr_joint) must be negated** due to opposite joint axis orientation
+- Robot articulation path: `/World/Ogre/base_link` (or check your USD stage)
 
 ### Isaac Sim Wheel Joint Configuration
 
@@ -474,3 +484,35 @@ Drive → Angular:
 **Strafe doesn't work:**
 - Simple cylinder wheels cannot strafe (need actual mecanum roller physics)
 - Complex mecanum wheels (with rollers) work but may reduce FPS significantly
+
+### Testing /cmd_vel Action Graph
+
+After creating the `/cmd_vel` subscriber action graph, test each motion independently:
+
+```bash
+# Start Isaac Sim, load ogre.usd, press Play ▶️
+# In terminal:
+export ROS_DOMAIN_ID=42
+
+# Test 1: Pure forward (should go STRAIGHT, no rotation)
+ros2 topic pub /cmd_vel geometry_msgs/msg/Twist \
+  "{linear: {x: 0.3, y: 0.0, z: 0.0}, angular: {x: 0.0, y: 0.0, z: 0.0}}" -r 10
+
+# Test 2: Pure strafe right (should slide RIGHT, no rotation)
+ros2 topic pub /cmd_vel geometry_msgs/msg/Twist \
+  "{linear: {x: 0.0, y: -0.3, z: 0.0}, angular: {x: 0.0, y: 0.0, z: 0.0}}" -r 10
+
+# Test 3: Pure rotation CCW (should spin counter-clockwise in place)
+ros2 topic pub /cmd_vel geometry_msgs/msg/Twist \
+  "{linear: {x: 0.0, y: 0.0, z: 0.0}, angular: {x: 0.0, y: 0.0, z: 0.5}}" -r 10
+
+# Test 4: Use ROS2 keyboard teleop
+sudo apt install ros-humble-teleop-twist-keyboard
+ros2 run teleop_twist_keyboard teleop_twist_keyboard
+```
+
+**Troubleshooting:**
+- **Forward causes rotation** → Right wheels spinning wrong direction, check negations
+- **Strafe causes rotation** → Front/rear or left/right wheels swapped in joint array
+- **Rotation backwards** → Negate vtheta in all equations
+- **No movement** → Check Articulation Controller path and joint names match
