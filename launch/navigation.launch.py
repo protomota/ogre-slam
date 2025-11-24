@@ -7,7 +7,6 @@ Launches complete autonomous navigation system:
 - Sensors: RPLIDAR A1 + RealSense D435 (pointcloud)
 - Odometry: Wheel encoders + EKF fusion
 - Navigation: Nav2 stack with waypoint navigation and obstacle avoidance
-- Control: ogre_teleop for manual override
 - Visualization: RViz with Nav2 panel
 
 Usage:
@@ -16,7 +15,6 @@ Usage:
 Arguments:
     map: Path to saved map YAML file (REQUIRED)
     use_rviz: Launch RViz visualization (default: true)
-    use_teleop: Launch ogre_teleop for manual override (default: true)
 """
 
 import os
@@ -78,7 +76,6 @@ def generate_launch_description():
     # Get package directories
     ogre_slam_dir = get_package_share_directory('ogre_slam')
     rplidar_dir = get_package_share_directory('rplidar_ros')
-    ogre_teleop_dir = get_package_share_directory('ogre_teleop')
     nav2_bringup_dir = get_package_share_directory('nav2_bringup')
 
     # Configuration file paths
@@ -99,12 +96,6 @@ def generate_launch_description():
         'use_rviz',
         default_value='true',
         description='Launch RViz for visualization'
-    )
-
-    use_teleop_arg = DeclareLaunchArgument(
-        'use_teleop',
-        default_value='true',
-        description='Launch ogre_teleop for manual control override'
     )
 
     rplidar_model_arg = DeclareLaunchArgument(
@@ -128,7 +119,6 @@ def generate_launch_description():
     # Launch configurations
     map_file = LaunchConfiguration('map')
     use_rviz = LaunchConfiguration('use_rviz')
-    use_teleop = LaunchConfiguration('use_teleop')
     rplidar_model = LaunchConfiguration('rplidar_model')
     use_odometry = LaunchConfiguration('use_odometry')
     use_ekf = LaunchConfiguration('use_ekf')
@@ -305,15 +295,7 @@ def generate_launch_description():
         emulate_tty=True
     )
 
-    # 17. ogre_teleop launch (manual control override - conditional)
-    teleop_launch = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource(
-            os.path.join(ogre_teleop_dir, 'launch', 'web_teleop.launch.py')
-        ),
-        condition=IfCondition(use_teleop)
-    )
-
-    # 18. RViz with Nav2 panel (conditional)
+    # 17. RViz with Nav2 panel (conditional)
     rviz_node = Node(
         package='rviz2',
         executable='rviz2',
@@ -328,7 +310,6 @@ def generate_launch_description():
         # Launch arguments
         map_arg,
         use_rviz_arg,
-        use_teleop_arg,
         rplidar_model_arg,
         use_odometry_arg,
         use_ekf_arg,
@@ -358,7 +339,6 @@ def generate_launch_description():
         velocity_smoother,
         lifecycle_manager_navigation,
 
-        # Control and visualization
-        teleop_launch,
+        # Visualization
         rviz_node
     ])
