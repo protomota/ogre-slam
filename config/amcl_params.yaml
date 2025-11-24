@@ -1,6 +1,6 @@
 amcl:
   ros__parameters:
-    use_sim_time: False
+    use_sim_time: True
 
     # Robot model parameters
     robot_model_type: "nav2_amcl::DifferentialMotionModel"  # Use differential for mecanum
