@@ -24,16 +24,18 @@ Then reload ogre.usd in Isaac Sim.
 ## Default Configuration
 
 - **Maze Size:** 5×5 cells (smaller, easier to map)
-- **Cell Size:** 80cm × 80cm (open space for driving)
-- **Wall Dimensions:** 80cm long × 38.5cm tall × 2cm thick
-- **Total Physical Size:** 4.0m × 4.0m
-- **Position:** Centered at (-2.0m, -2.0m, 0.6m) with open center cell
+- **Cell Size:** 60cm × 60cm (open space for driving)
+- **Wall Dimensions:** 60cm long × 38.5cm tall × 2cm thick
+- **Total Physical Size:** 3.0m × 3.0m
+- **Position:** Centered at (-1.5m, -1.5m, 0.6m) with open center cell
 - **Physics:** Rigid body collision with kinematic mode (static walls)
 - **Algorithm:** Recursive backtracking (guarantees solution)
 
 **Note:** The center cell (2,2) is always cleared to provide an open starting area for the robot. Cell size controls the drivable space between walls.
 
-**Robot Fit:** Designed for 340mm×200mm robot (diagonal 390mm). Cell size provides 410mm clearance for comfortable mecanum omnidirectional navigation.
+**Robot Fit:** Designed for 205mm×95mm robot (diagonal 226mm). Cell size provides 374mm clearance for comfortable mecanum omnidirectional navigation.
+
+**Alternative:** For wider robot configuration (340mm track), see `OGRE_WIDE.md` for 80cm cell size.
 
 ## Customization
 
@@ -107,7 +109,7 @@ cp ogre_backup.usd ogre.usd
 
 **Maze too big/small?**
 - Adjust `MazeGenerator(width=X, height=Y)`
-- Default is 5x5 cells = 4.0m × 4.0m (80cm per cell)
+- Default is 5x5 cells = 3.0m × 3.0m (60cm per cell)
 
 **Robot collides with walls?**
 - Walls already have collision enabled
@@ -138,8 +140,9 @@ cp ogre_backup.usd ogre.usd
 ---
 
 **Tips:**
-- Start with default 5x5 maze for testing (4m × 4m)
+- Start with default 5x5 maze for testing (3m × 3m)
 - Smaller mazes (3x3) map faster but less interesting
 - Larger mazes (8x8+) test SLAM loop closure
-- Cell size 80cm fits 340mm robot with 410mm clearance
+- Cell size 60cm fits 205mm robot with 374mm clearance
+- For wider robot (340mm track), use 80cm cells (see OGRE_WIDE.md)
 - Thin walls (2cm) match real cardboard
