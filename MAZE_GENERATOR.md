@@ -25,7 +25,7 @@ Then reload ogre.usd in Isaac Sim.
 
 - **Maze Size:** 5×5 cells (smaller, easier to map)
 - **Cell Size:** 60cm × 60cm (open space for driving)
-- **Wall Dimensions:** 60cm long × 50cm tall × 2cm thick
+- **Wall Dimensions:** 60cm long × 100cm tall × 2cm thick
 - **Total Physical Size:** 3.0m × 3.0m
 - **Position:** Centered at (-1.5m, -1.5m, 0.6m) with open center cell
 - **Physics:** Rigid body collision with kinematic mode (static walls)
@@ -49,7 +49,7 @@ maze = MazeGenerator(width=10, height=10)  # 10x10 instead of 5x5
 create_maze_usd(
     maze,
     cell_size=1.00,        # 100cm cells (even more space)
-    wall_height=0.50,      # 50cm tall (default height)
+    wall_height=1.00,      # 100cm tall (default height)
     wall_thickness=0.02,   # 2cm thick
     maze_x=-2.5,           # Maze Xform position X (adjust for new size)
     maze_y=-2.5,           # Maze Xform position Y (adjust for new size)

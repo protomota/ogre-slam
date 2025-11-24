@@ -240,7 +240,7 @@ def main():
     create_maze_usd(
         maze,
         cell_size=0.60,       # 60cm open space (comfortable for 205mm wide robot)
-        wall_height=0.50,     # 50cm tall (taller for better visibility)
+        wall_height=1.00,     # 100cm tall (1 meter - excellent LIDAR visibility)
         wall_thickness=0.02,  # 2cm thick
         usd_file="/home/brad/ros2_ws/src/ogre-slam/ogre.usd",
         maze_x=center_offset, # Centered X (-1.5m)
@@ -252,7 +252,7 @@ def main():
     print("   Edit the script to change:")
     print("   - Maze size: MazeGenerator(width=5, height=5)")
     print("   - Cell size: cell_size=0.60 (60cm paths for 205mm robot)")
-    print("   - Wall height: wall_height=0.50 (50cm tall)")
+    print("   - Wall height: wall_height=1.00 (100cm/1m tall)")
     print("   - Wall thickness: wall_thickness=0.02 (2cm thick)")
     print("   - Position: Auto-centered at origin with open center")
     print("   - Random seed: random.seed(42) for reproducible mazes")
