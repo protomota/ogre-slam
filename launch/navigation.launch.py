@@ -137,24 +137,25 @@ def generate_launch_description():
     )
 
     # 2. RealSense D435 launch (3D depth camera with pointcloud)
-    realsense_launch = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource(
-            PathJoinSubstitution([
-                FindPackageShare('realsense2_camera'),
-                'launch',
-                'rs_launch.py'
-            ])
-        ),
-        launch_arguments={
-            'camera_name': 'camera',
-            'camera_namespace': 'camera',
-            'enable_color': 'true',
-            'enable_depth': 'true',
-            'pointcloud.enable': 'true',  # CRITICAL: Enable pointcloud for Nav2
-            'align_depth.enable': 'true',
-            'decimation_filter.enable': 'false',  # Set true to reduce CPU load
-        }.items()
-    )
+    # NOTE: Disabled for Isaac Sim testing - real robot only
+    # realsense_launch = IncludeLaunchDescription(
+    #     PythonLaunchDescriptionSource(
+    #         PathJoinSubstitution([
+    #             FindPackageShare('realsense2_camera'),
+    #             'launch',
+    #             'rs_launch.py'
+    #         ])
+    #     ),
+    #     launch_arguments={
+    #         'camera_name': 'camera',
+    #         'camera_namespace': 'camera',
+    #         'enable_color': 'true',
+    #         'enable_depth': 'true',
+    #         'pointcloud.enable': 'true',  # CRITICAL: Enable pointcloud for Nav2
+    #         'align_depth.enable': 'true',
+    #         'decimation_filter.enable': 'false',  # Set true to reduce CPU load
+    #     }.items()
+    # )
 
     # 3. Static TF: base_link → camera_link
     # Measured position: camera is 15cm forward, 10cm up from robot center
@@ -320,7 +321,7 @@ def generate_launch_description():
 
         # Sensor drivers
         rplidar_launch,
-        realsense_launch,
+        # realsense_launch,  # Disabled for Isaac Sim
 
         # Odometry and localization
         odometry_node,
