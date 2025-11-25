@@ -171,12 +171,54 @@ publish_rate: 50.0    # Hz
 
 ### 8. Package Structure
 
-**Files Created:**
-- `package.xml` - ROS2 package manifest
-- `setup.py` - Python package setup with data files
-- `setup.cfg` - Installation configuration
-- `resource/ogre_slam` - ament resource marker
-- `ogre_slam/__init__.py` - Python module init
+```
+ogre-slam/
+├── CLAUDE.md                    # Claude Code guidance
+├── README.md                    # Main documentation
+├── package.xml                  # ROS2 package manifest
+├── setup.py / setup.cfg         # Python package setup
+│
+├── ogre_slam/                   # Core Python modules
+│   ├── encoder_reader.py        # GPIO encoder tick counting
+│   ├── mecanum_odometry.py      # Forward kinematics
+│   ├── odometry_node.py         # ROS2 /odom publisher
+│   └── dummy_odom_node.py       # Fallback static odometry
+│
+├── launch/                      # ROS2 launch files
+│   ├── mapping.launch.py        # SLAM mapping mode
+│   └── navigation.launch.py     # Nav2 autonomous navigation
+│
+├── config/                      # Configuration files
+│   ├── odometry_params.yaml     # Robot dimensions
+│   ├── ekf_params.yaml          # Sensor fusion
+│   ├── slam_toolbox_params.yaml # SLAM settings
+│   ├── amcl_params.yaml         # Localization
+│   └── nav2_params.yaml         # Nav2 stack config
+│
+├── scripts/                     # Helper scripts
+│   ├── launch_mapping_session.sh
+│   ├── launch_isaac_sim_rviz.sh
+│   ├── generate_maze.py         # Isaac Sim maze generator
+│   └── ...
+│
+├── rviz/                        # RViz configurations
+│   ├── mapping.rviz
+│   ├── navigation.rviz
+│   └── ...
+│
+├── maps/                        # Saved maps (.yaml + .pgm)
+├── usds/                        # Isaac Sim USD files
+│   ├── ogre.usd                 # Main robot scene
+│   └── ...
+│
+├── docs/                        # Additional documentation
+│   ├── IMPLEMENTATION.md        # This file
+│   ├── NAV2_README.md           # Nav2 guide
+│   ├── MAZE_GENERATOR.md        # Maze generator docs
+│   └── OGRE_WIDE.md             # Wide-base config
+│
+└── resource/ogre_slam           # ament resource marker
+```
 
 ## Technical Specifications
 

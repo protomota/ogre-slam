@@ -152,31 +152,60 @@ map (from slam_toolbox in mapping OR amcl in navigation)
 
 ## File Structure
 
-### Core Odometry Modules (ogre_slam/)
-- `encoder_reader.py`: GPIO interrupt-based encoder tick counting for 4 motors (M1-M4)
-- `mecanum_odometry.py`: Forward kinematics converting encoder ticks → robot velocity (vx, vy, vtheta)
-- `odometry_node.py`: ROS2 node publishing `/odom` topic and TF transforms
-- `dummy_odom_node.py`: Fallback static odometry for testing (NOT used in production)
-
-### Launch Files (launch/)
-- `mapping.launch.py`: SLAM mapping mode - builds new maps
-  - Launches: RPLIDAR, odometry, EKF, slam_toolbox (async mapping), map_saver_server, optional RViz, optional teleop
-- `navigation.launch.py`: Autonomous navigation mode - uses saved maps
-  - Launches: RPLIDAR, RealSense, odometry, EKF, map_server, AMCL, Nav2 stack, optional RViz, optional teleop
-  - **Requires** `map:=<path>` argument
-
-### Configuration (config/)
-- `odometry_params.yaml`: Robot physical dimensions and encoder specs
-- `ekf_params.yaml`: Sensor fusion configuration (critical for 2 PPR encoders)
-- `slam_toolbox_params.yaml`: SLAM settings (mapping OR localization mode)
-- `amcl_params.yaml`: Particle filter localization parameters
-- `nav2_params.yaml`: Complete Nav2 stack configuration (planners, controllers, behavior tree)
-
-### Helper Scripts (scripts/)
-- `launch_mapping_session.sh`: Unified launcher for SLAM + teleop (recommended for mapping on real robot)
-- `launch_isaac_sim_rviz.sh`: Launch RViz for Isaac Sim visualization (uses `ROS_USE_SIM_TIME=true`)
-- `remote_launch_slam_rviz.sh`: Launch RViz on remote computer for real robot mapping visualization
-- `remote_launch_nav_rviz.sh`: Launch RViz on remote computer for real robot navigation visualization
+```
+ogre-slam/
+├── CLAUDE.md                    # This file - Claude Code guidance
+├── README.md                    # Main documentation
+├── package.xml                  # ROS2 package manifest
+├── setup.py / setup.cfg         # Python package setup
+│
+├── ogre_slam/                   # Core Python modules
+│   ├── encoder_reader.py        # GPIO interrupt-based encoder tick counting (M1-M4)
+│   ├── mecanum_odometry.py      # Forward kinematics: ticks → velocity (vx, vy, vtheta)
+│   ├── odometry_node.py         # ROS2 node: /odom topic + TF transforms
+│   └── dummy_odom_node.py       # Fallback static odometry (NOT for production)
+│
+├── launch/                      # ROS2 launch files
+│   ├── mapping.launch.py        # SLAM mapping mode - builds new maps
+│   └── navigation.launch.py     # Nav2 autonomous navigation - uses saved maps
+│
+├── config/                      # Configuration files
+│   ├── odometry_params.yaml     # Robot dimensions, encoder specs
+│   ├── ekf_params.yaml          # Sensor fusion (critical for 2 PPR encoders)
+│   ├── slam_toolbox_params.yaml # SLAM settings (mapping/localization mode)
+│   ├── amcl_params.yaml         # Particle filter localization
+│   └── nav2_params.yaml         # Nav2 stack (planners, controllers, behavior tree)
+│
+├── scripts/                     # Helper scripts
+│   ├── launch_mapping_session.sh   # Unified SLAM + teleop launcher (real robot)
+│   ├── launch_isaac_sim_rviz.sh    # RViz for Isaac Sim (use_sim_time=true)
+│   ├── remote_launch_slam_rviz.sh  # Remote RViz for mapping
+│   ├── remote_launch_nav_rviz.sh   # Remote RViz for navigation
+│   ├── generate_maze.py            # Wide maze generator for Isaac Sim
+│   └── run_maze_generator.sh       # Maze generator launcher
+│
+├── rviz/                        # RViz configuration files
+│   ├── mapping.rviz             # SLAM mapping visualization
+│   ├── navigation.rviz          # Nav2 navigation visualization
+│   ├── ogre.rviz                # General robot visualization
+│   └── slam_universal.rviz      # Universal SLAM config
+│
+├── maps/                        # Saved maps (.yaml + .pgm)
+│   ├── my_map.yaml              # Example saved map
+│   └── wide_maze.yaml           # Wide maze for Nav2 testing
+│
+├── usds/                        # Isaac Sim USD files
+│   ├── ogre.usd                 # Main robot scene with maze
+│   ├── ogre_stable.usd          # Wide-base configuration
+│   ├── ogre_backup.usd          # Backup before maze generation
+│   └── ogre-*.usd               # Experimental configurations
+│
+└── docs/                        # Additional documentation
+    ├── IMPLEMENTATION.md        # Implementation details and testing
+    ├── NAV2_README.md           # Nav2 autonomous navigation guide
+    ├── MAZE_GENERATOR.md        # Maze generator documentation
+    └── OGRE_WIDE.md             # Wide-base robot configuration
+```
 
 **IMPORTANT:** Isaac Sim and real robot use different RViz scripts:
 - **Isaac Sim:** Uses `launch_isaac_sim_rviz.sh` which sets `ROS_USE_SIM_TIME=true` to sync with simulation clock (`/clock` topic)
@@ -303,10 +332,12 @@ Python dependencies (declared in setup.py):
 
 This package includes USD robot models for testing in NVIDIA Isaac Sim 5.0+ before deploying to hardware.
 
-### Isaac Sim Files
+### Isaac Sim Files (usds/)
 
-- `ogre.usd`: Main Isaac Sim scene with summit_xl_omni_four prebuilt mecanum robot
-- `ogre2-5.usd`: Experimental robot configurations (not tracked in git)
+- `usds/ogre.usd`: Main Isaac Sim scene with mecanum robot and maze
+- `usds/ogre_stable.usd`: Wide-base configuration (340mm track width)
+- `usds/ogre_backup.usd`: Backup before maze generation
+- `usds/ogre-*.usd`: Experimental robot configurations
 
 ### Robot Physical Dimensions (ogre.usd)
 
@@ -344,7 +375,7 @@ This matches the real Project Ogre hardware for accurate simulation.
 - Rear-Left (RL): (-0.0475, 0.1025, 0.04)
 - Rear-Right (RR): (-0.0475, -0.1025, 0.04)
 
-**⚠️ NOTE:** An alternative wide-base configuration (`ogre_stable.usd`) exists with 200mm wheelbase and 340mm track width. See `OGRE_WIDE.md` for details.
+**⚠️ NOTE:** An alternative wide-base configuration (`usds/ogre_stable.usd`) exists with 200mm wheelbase and 340mm track width. See `docs/OGRE_WIDE.md` for details.
 
 **Camera Mounting:**
 - Isaac Sim: `front_camera` frame at (0.15, 0, 0.10) - 15cm forward, 10cm above base_link

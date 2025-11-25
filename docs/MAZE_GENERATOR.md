@@ -77,18 +77,18 @@ maze = MazeGenerator(width=5, height=5)
 
 ## Backup & Restore
 
-A backup is automatically created: `ogre_backup.usd`
+A backup is automatically created: `usds/ogre_backup.usd`
 
 **To restore original:**
 ```bash
 cd ~/ros2_ws/src/ogre-slam
-cp ogre_backup.usd ogre.usd
+cp usds/ogre_backup.usd usds/ogre.usd
 ```
 
 ## Using the Maze
 
 1. **Generate maze** (see Quick Start above)
-2. **Load ogre.usd** in Isaac Sim
+2. **Load usds/ogre.usd** in Isaac Sim
 3. **Press Play** ▶️
 4. **Run SLAM mapping:**
    ```bash
@@ -140,8 +140,8 @@ cp ogre_backup.usd ogre.usd
 
 - `scripts/generate_maze.py` - Main maze generator script
 - `scripts/run_maze_generator.sh` - Launcher script (auto-finds Isaac Sim Python)
-- `ogre.usd` - Your robot scene (maze will be added here)
-- `ogre_backup.usd` - Backup created automatically
+- `usds/ogre.usd` - Your robot scene (maze will be added here)
+- `usds/ogre_backup.usd` - Backup created automatically
 
 ---
 
