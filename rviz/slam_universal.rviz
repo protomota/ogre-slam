@@ -70,7 +70,7 @@ Visualization Manager:
       Size (m): 0.05000000074505806
       Style: Points
       Topic:
-        Depth: 5
+        Depth: 100
         Durability Policy: Volatile
         History Policy: Keep Last
         Reliability Policy: Best Effort
@@ -142,7 +142,7 @@ Visualization Manager:
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
-    Fixed Frame: map
+    Fixed Frame: odom
     Frame Rate: 30
   Name: root
   Tools:
