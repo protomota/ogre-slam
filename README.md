@@ -215,6 +215,11 @@ This creates:
 - `my_map.yaml` - Map metadata
 - `my_map.pgm` - Map image
 
+Preview the saved map:
+```bash
+eog ~/ros2_ws/src/ogre-slam/maps/my_map.pgm
+```
+
 **Step 4: Stop the system**
 ```bash
 # Press Ctrl+C in launch terminal
@@ -282,6 +287,11 @@ ros2 run nav2_map_server map_saver_cli -f ~/ros2_ws/src/ogre-slam/maps/isaac_sim
 This creates:
 - `isaac_sim_map.yaml` - Map metadata
 - `isaac_sim_map.pgm` - Map image
+
+Preview the saved map:
+```bash
+eog ~/ros2_ws/src/ogre-slam/maps/isaac_sim_map.pgm
+```
 
 **Step 4: Stop the system**
 ```bash
