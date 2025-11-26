@@ -111,18 +111,27 @@ tegrastats
 
 ### TF Tree Structure
 
+**Real Robot (Jetson):**
 ```
 map (from slam_toolbox in mapping OR amcl in navigation)
   └─ odom (from ekf_filter_node OR odometry_node)
       └─ base_link (robot center at wheel axle height)
-          ├─ laser (RPLIDAR: 0.0m forward, 0.30m up, 180° rotated - mounted on 65mm posts)
-          ├─ front_camera (Camera: 0.15m forward, 0.10m up - Isaac Sim camera sensor)
-          ├─ camera_link (RealSense D435: 0.15m forward, 0.10m up - real robot only)
-          │   ├─ camera_depth_frame
-          │   │   └─ camera_depth_optical_frame (pointcloud frame)
-          │   └─ camera_color_frame
-          └─ imx477_camera_optical_frame (RPi camera for teleop)
+          ├─ laser (RPLIDAR: 0.0m forward, 0.30m up, 180° rotated)
+          └─ camera_link (RealSense D435: 0.15m forward, 0.10m up)
+              ├─ camera_depth_frame
+              │   └─ camera_depth_optical_frame (pointcloud frame)
+              └─ camera_color_frame
 ```
+
+**Isaac Sim (Host Computer):**
+```
+odom (from Isaac Sim odometry)
+  └─ base_link (robot center at wheel axle height)
+      ├─ laser (LIDAR: 0.0m forward, 0.30m up, 180° rotated)
+      └─ camera_link (camera: 0.15m forward, 0.10m up)
+          └─ camera_depth (optical frame for pointcloud)
+```
+Note: In Isaac Sim, `map` frame is added by slam_toolbox during SLAM mapping.
 
 ### Critical Configuration Parameters
 
