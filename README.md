@@ -963,6 +963,9 @@ source install/setup.bash
 
 **Terminal 2: Launch the Policy Controller**
 ```bash
+# Exit conda if active (ROS2 uses system Python, not conda)
+conda deactivate
+
 export ROS_DOMAIN_ID=42
 source ~/ros2_ws/install/setup.bash
 ros2 launch ogre_policy_controller policy_controller.launch.py
