@@ -466,97 +466,6 @@ ros2 run teleop_twist_keyboard teleop_twist_keyboard
 
 See `CLAUDE.md` for detailed action graph setup, robot dimensions, and complete configuration.
 
-### Isaac Sim Physics Troubleshooting
-
-If your robot exhibits bouncing, flipping, or unstable behavior in Isaac Sim, this is commonly due to physics configuration issues. Here are the primary causes and solutions:
-
-#### Common Causes of Physics Instability
-
-**1. Collider Misconfiguration (MOST COMMON)**
-- Mecanum wheels require precise collision geometry
-- Overlapping colliders (wheels with body/ground/each other) cause instability
-- Complex mesh collisions (with roller details) overwhelm the physics solver
-
-**Solution:**
-- Enable collision visualization: **View → Show by Type → Physics → Colliders**
-- Check for RED overlaps at rest - there should be minimal intrusion
-- Use simple collision approximations: **Property → Physics → Collision → Approximation: "boundingCube"**
-- Disable collision on passive rollers (keep only main wheel hub collision)
-
-**2. Improper Mass/Inertia Settings**
-- Unrealistic or unbalanced mass causes abnormal dynamics
-- Auto-computed inertia from complex geometry can be incorrect
-
-**Solution:**
-- Verify realistic masses: Robot base ~3.5kg, wheels ~0.1kg each
-- Check: **Property → Physics → Rigid Body → Mass**
-- Ensure inertia tensors are computed from actual geometry (not default values)
-
-**3. Excessive Maximum Velocity (CRITICAL - COMMON ISSUE)**
-- Default Maximum Velocity on RevoluteJoints is often 1000000 (1 million!)
-- This allows wheels to spin out of control, causing physics chaos and instability
-- **This is the most common cause of Isaac Sim mecanum wheel bouncing**
-- Too low Maximum Velocity prevents proper mecanum wheel slip behavior
-
-**Solution:**
-- For each wheel RevoluteJoint: **Property → Physics → Revolute Joint → Drive → Angular**
-  - **Maximum Velocity:** **10000** (NOT 1000000!) - This is the critical fix!
-    - Allows proper mecanum wheel slip while maintaining stability
-    - Too low (e.g., 100) prevents wheels from slipping correctly
-  - **Damping:** 1.0-10.0 (NOT 0!)
-  - **Stiffness:** 0
-  - **Max Force:** 100-1000 (tune for stability)
-
-**4. Insufficient Joint Damping**
-- Missing or low damping on wheel joints causes oscillations
-- Too high stiffness can cause divergence
-
-**Solution:**
-- Apply damping values as listed above (1.0-10.0)
-
-**5. Poor Friction Parameters**
-- Mecanum wheels need balanced lateral and longitudinal friction
-- Mismatched coefficients cause force buildup and "popping"
-
-**Solution:**
-- Wheels: **Property → Physics → Physics Material**
-  - **Static Friction:** 0.8-1.0
-  - **Dynamic Friction:** 0.6-0.8
-- Ground plane: Match or slightly lower friction values
-
-**6. Physics Timestep Issues**
-- Too large timestep makes contacts unstable
-- Insufficient solver iterations can't handle articulated complexity
-
-**Solution:**
-- Select `/physicsScene`: **Property → Physics Scene**
-  - **Position Iteration Count:** 8 (default: 4)
-  - **Velocity Iteration Count:** 2 (default: 1)
-  - **Time Steps Per Second:** 120+ (smaller timestep = more stable)
-  - **Enable CCD:** True (Continuous Collision Detection)
-
-#### Diagnostic Steps
-
-1. **Check Maximum Velocity (FIX THIS FIRST!):** Verify all wheel joints have Maximum Velocity = 10000 (NOT 1000000)
-2. **Check for overlaps:** Enable collision visualization and look for red overlaps
-3. **Increase damping:** Set joint damping to 5-10 if currently low/zero
-4. **Simplify collision:** Use boundingCube approximation on wheels, disable roller collision
-5. **Verify masses:** Check all rigid bodies have realistic mass values
-6. **Increase solver quality:** Set position iterations to 8, velocity to 2
-
-#### Quick Fix Checklist
-
-- ✅ **MOST IMPORTANT:** Wheel joints Maximum Velocity set to **10000** (NOT 1000000!)
-  - Allows proper mecanum wheel slip while maintaining stability
-- ✅ Wheel joints have damping ≥ 1.0
-- ✅ No red collision overlaps visible at rest
-- ✅ Wheel collision approximation set to "boundingCube" or "boundingSphere"
-- ✅ All 28 passive rollers have collision disabled
-- ✅ Physics scene position iterations ≥ 8
-- ✅ Wheels not penetrating ground (Z position = wheel radius + 5-10mm clearance)
-
-**Reference:** [NVIDIA Isaac Sim Forum - Mecanum Wheel Physics](https://forums.developer.nvidia.com/t/351181)
-
 ## Configuration
 
 ### Gear Ratio Calibration (CRITICAL!)
@@ -814,6 +723,97 @@ odom (from Isaac Sim)
    ros2 topic list
    # Should see /scan, /odom, /map
    ```
+
+### Isaac Sim Physics Troubleshooting
+
+If your robot exhibits bouncing, flipping, or unstable behavior in Isaac Sim, this is commonly due to physics configuration issues. Here are the primary causes and solutions:
+
+#### Common Causes of Physics Instability
+
+**1. Collider Misconfiguration (MOST COMMON)**
+- Mecanum wheels require precise collision geometry
+- Overlapping colliders (wheels with body/ground/each other) cause instability
+- Complex mesh collisions (with roller details) overwhelm the physics solver
+
+**Solution:**
+- Enable collision visualization: **View → Show by Type → Physics → Colliders**
+- Check for RED overlaps at rest - there should be minimal intrusion
+- Use simple collision approximations: **Property → Physics → Collision → Approximation: "boundingCube"**
+- Disable collision on passive rollers (keep only main wheel hub collision)
+
+**2. Improper Mass/Inertia Settings**
+- Unrealistic or unbalanced mass causes abnormal dynamics
+- Auto-computed inertia from complex geometry can be incorrect
+
+**Solution:**
+- Verify realistic masses: Robot base ~3.5kg, wheels ~0.1kg each
+- Check: **Property → Physics → Rigid Body → Mass**
+- Ensure inertia tensors are computed from actual geometry (not default values)
+
+**3. Excessive Maximum Velocity (CRITICAL - COMMON ISSUE)**
+- Default Maximum Velocity on RevoluteJoints is often 1000000 (1 million!)
+- This allows wheels to spin out of control, causing physics chaos and instability
+- **This is the most common cause of Isaac Sim mecanum wheel bouncing**
+- Too low Maximum Velocity prevents proper mecanum wheel slip behavior
+
+**Solution:**
+- For each wheel RevoluteJoint: **Property → Physics → Revolute Joint → Drive → Angular**
+  - **Maximum Velocity:** **10000** (NOT 1000000!) - This is the critical fix!
+    - Allows proper mecanum wheel slip while maintaining stability
+    - Too low (e.g., 100) prevents wheels from slipping correctly
+  - **Damping:** 1.0-10.0 (NOT 0!)
+  - **Stiffness:** 0
+  - **Max Force:** 100-1000 (tune for stability)
+
+**4. Insufficient Joint Damping**
+- Missing or low damping on wheel joints causes oscillations
+- Too high stiffness can cause divergence
+
+**Solution:**
+- Apply damping values as listed above (1.0-10.0)
+
+**5. Poor Friction Parameters**
+- Mecanum wheels need balanced lateral and longitudinal friction
+- Mismatched coefficients cause force buildup and "popping"
+
+**Solution:**
+- Wheels: **Property → Physics → Physics Material**
+  - **Static Friction:** 0.8-1.0
+  - **Dynamic Friction:** 0.6-0.8
+- Ground plane: Match or slightly lower friction values
+
+**6. Physics Timestep Issues**
+- Too large timestep makes contacts unstable
+- Insufficient solver iterations can't handle articulated complexity
+
+**Solution:**
+- Select `/physicsScene`: **Property → Physics Scene**
+  - **Position Iteration Count:** 8 (default: 4)
+  - **Velocity Iteration Count:** 2 (default: 1)
+  - **Time Steps Per Second:** 120+ (smaller timestep = more stable)
+  - **Enable CCD:** True (Continuous Collision Detection)
+
+#### Diagnostic Steps
+
+1. **Check Maximum Velocity (FIX THIS FIRST!):** Verify all wheel joints have Maximum Velocity = 10000 (NOT 1000000)
+2. **Check for overlaps:** Enable collision visualization and look for red overlaps
+3. **Increase damping:** Set joint damping to 5-10 if currently low/zero
+4. **Simplify collision:** Use boundingCube approximation on wheels, disable roller collision
+5. **Verify masses:** Check all rigid bodies have realistic mass values
+6. **Increase solver quality:** Set position iterations to 8, velocity to 2
+
+#### Quick Fix Checklist
+
+- ✅ **MOST IMPORTANT:** Wheel joints Maximum Velocity set to **10000** (NOT 1000000!)
+  - Allows proper mecanum wheel slip while maintaining stability
+- ✅ Wheel joints have damping ≥ 1.0
+- ✅ No red collision overlaps visible at rest
+- ✅ Wheel collision approximation set to "boundingCube" or "boundingSphere"
+- ✅ All 28 passive rollers have collision disabled
+- ✅ Physics scene position iterations ≥ 8
+- ✅ Wheels not penetrating ground (Z position = wheel radius + 5-10mm clearance)
+
+**Reference:** [NVIDIA Isaac Sim Forum - Mecanum Wheel Physics](https://forums.developer.nvidia.com/t/351181)
 
 ## Performance Tuning
 
