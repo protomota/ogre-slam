@@ -180,12 +180,22 @@ Build maps using Isaac Sim simulation first, then deploy to the real robot.
 ### Mapping in Isaac Sim (Host Computer)
 
 **Prerequisites:**
-- Isaac Sim running with ogre.usd scene
+- NVIDIA Isaac Sim 5.0+ installed
+- ogre.usd scene loaded
 - Action graph configured (see "Isaac Sim Simulation" section below)
-- Isaac Sim playing (Press Play ▶️)
-- ROS_DOMAIN_ID=42 in ROS2 Context node
 
-**Step 1: Launch SLAM**
+**Step 1: Start Isaac Sim (MUST DO FIRST)**
+
+1. Launch Isaac Sim and load the `usds/ogre.usd` scene
+2. Verify ROS2 Context node has **Domain ID = 42**
+3. **Press Play ▶️** to start the simulation
+4. Verify topics are publishing:
+   ```bash
+   export ROS_DOMAIN_ID=42
+   ros2 topic list  # Should see /scan, /odom, /clock, /tf
+   ```
+
+**Step 2: Launch SLAM**
 
 On your **Host Computer**:
 ```bash
@@ -209,7 +219,7 @@ ros2 launch ogre_slam mapping.launch.py \
 - `use_teleop:=false` - Don't launch ogre_teleop (not needed)
 - `use_rviz:=true` - Show visualization
 
-**Step 2: Drive the robot**
+**Step 3: Drive the robot**
 
 In another terminal:
 ```bash
@@ -227,7 +237,7 @@ ros2 run teleop_twist_keyboard teleop_twist_keyboard
 
 Drive slowly around the Isaac Sim environment and watch the map build in RViz!
 
-**Step 3: Save the map**
+**Step 4: Save the map**
 
 When mapping is complete, in another terminal:
 ```bash
@@ -243,7 +253,7 @@ Preview the saved map:
 eog ~/ros2_ws/src/ogre-slam/maps/isaac_sim_map.pgm
 ```
 
-**Step 4: Stop the system**
+**Step 5: Stop the system**
 ```bash
 # Press Ctrl+C in both terminals
 ```
@@ -360,6 +370,19 @@ Navigate using a saved map. Can run on either Host Computer (Isaac Sim) or Jetso
 2. Have a saved map from mapping mode (see SLAM Mapping above)
 
 ### Navigation in Isaac Sim (Host Computer)
+
+**Step 1: Start Isaac Sim (MUST DO FIRST)**
+
+1. Launch Isaac Sim and load the `usds/ogre.usd` scene
+2. Verify ROS2 Context node has **Domain ID = 42**
+3. **Press Play ▶️** to start the simulation
+4. Verify topics are publishing:
+   ```bash
+   export ROS_DOMAIN_ID=42
+   ros2 topic list  # Should see /scan, /odom, /clock, /tf
+   ```
+
+**Step 2: Launch Navigation**
 
 ```bash
 cd ~/ros2_ws && source install/setup.bash

@@ -163,37 +163,57 @@ wheel_rr = -(vx - vy + vtheta * L)  # Negated (right side)
 
 ## Running SLAM Mapping
 
+**IMPORTANT:** Isaac Sim must be running BEFORE launching ROS2 nodes.
+
 1. **Start Isaac Sim** and load `usds/ogre.usd`
 
-2. **Press Play** (▶️) to start simulation
+2. **Verify ROS2 Context** has Domain ID = 42
 
-3. **Launch SLAM** on Host Computer:
+3. **Press Play** (▶️) to start simulation
+
+4. **Verify topics are publishing** (in a terminal):
+   ```bash
+   export ROS_DOMAIN_ID=42
+   ros2 topic list  # Should see /scan, /odom, /clock, /tf
+   ```
+
+5. **Launch SLAM** on Host Computer:
    ```bash
    cd ~/ros2_ws && source install/setup.bash
    export ROS_DOMAIN_ID=42
    ros2 launch ogre_slam mapping.launch.py use_sim_time:=true
    ```
 
-4. **Launch teleop** in another terminal:
+6. **Launch teleop** in another terminal:
    ```bash
    export ROS_DOMAIN_ID=42
    ros2 run teleop_twist_keyboard teleop_twist_keyboard
    ```
 
-5. **Drive around** to build the map
+7. **Drive around** to build the map
 
-6. **Save map**:
+8. **Save map**:
    ```bash
    ros2 run nav2_map_server map_saver_cli -f ~/ros2_ws/src/ogre-slam/maps/isaac_sim_map
    ```
 
 ## Running Navigation
 
+**IMPORTANT:** Isaac Sim must be running BEFORE launching ROS2 nodes.
+
 1. **Start Isaac Sim** and load `usds/ogre.usd`
 
-2. **Press Play** (▶️)
+2. **Verify ROS2 Context** has Domain ID = 42
 
-3. **Launch Navigation**:
+3. **Press Play** (▶️) to start simulation
+
+4. **Verify topics are publishing** (in a terminal):
+   ```bash
+   export ROS_DOMAIN_ID=42
+   ros2 topic list  # Should see /scan, /odom, /clock, /tf
+   ```
+
+5. **Launch Navigation**:
    ```bash
    cd ~/ros2_ws && source install/setup.bash
    export ROS_DOMAIN_ID=42
@@ -202,9 +222,9 @@ wheel_rr = -(vx - vy + vtheta * L)  # Negated (right side)
      use_sim_time:=true
    ```
 
-4. **Set initial pose** in RViz ("2D Pose Estimate")
+6. **Set initial pose** in RViz ("2D Pose Estimate")
 
-5. **Send navigation goal** ("Nav2 Goal")
+7. **Send navigation goal** ("Nav2 Goal")
 
 ## Visualizing in RViz
 
