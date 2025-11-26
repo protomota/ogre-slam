@@ -38,7 +38,7 @@ This is a **standalone ROS2 package** for SLAM and autonomous navigation on meca
 - **Mecanum drive** robot with 4 motors (25GA-370 with gear_ratio 224.0)
 - **Encoders**: 2 PPR Hall sensors on each motor
 - **RPLIDAR** (A1/A2/A3 series) - 2D laser scanner
-- **RealSense D435** depth camera - 3D obstacle detection (NEW)
+- **RealSense D435** depth camera - 3D obstacle detection
 - **GPIO access** for encoder reading
 
 ### Robot Configuration
@@ -66,6 +66,35 @@ M3 (RL) --- M2 (RR)
 - M2 (Rear-Right): Pins 13, 15
 - M3 (Rear-Left): Pins 29, 31
 - M4 (Front-Left): Pins 32, 33
+
+## Package Structure
+
+```
+ogre-slam/
+├── ogre_slam/                   # Python module
+│   ├── encoder_reader.py        # GPIO encoder reading
+│   ├── mecanum_odometry.py      # Mecanum kinematics
+│   └── odometry_node.py         # ROS2 odometry node
+├── launch/
+│   ├── mapping.launch.py        # SLAM mapping launch file
+│   └── navigation.launch.py     # Nav2 navigation launch file
+├── config/
+│   ├── odometry_params.yaml     # Robot dimensions
+│   ├── slam_toolbox_params.yaml # SLAM configuration
+│   ├── nav2_params.yaml         # Nav2 stack configuration
+│   └── ekf_params.yaml          # Sensor fusion config
+├── scripts/
+│   ├── launch_mapping_session.sh    # Unified launcher (Jetson)
+│   ├── launch_isaac_sim_rviz.sh     # RViz for Isaac Sim
+│   └── remote_launch_slam_rviz.sh   # Remote RViz launcher
+├── maps/                        # Saved maps directory
+├── rviz/                        # RViz configurations
+├── usds/                        # Isaac Sim USD files
+├── docs/                        # Additional documentation
+├── package.xml
+├── setup.py
+└── README.md
+```
 
 ## Dependencies
 
@@ -623,31 +652,6 @@ Edit `config/ekf_params.yaml` to:
 
 The EKF is **essential** for this robot - without it, the 2 PPR encoders produce unusable odometry.
 
-## Package Structure
-
-```
-ogre-slam/
-├── ogre_slam/                   # Python module
-│   ├── encoder_reader.py        # GPIO encoder reading
-│   ├── mecanum_odometry.py      # Mecanum kinematics
-│   └── odometry_node.py         # ROS2 odometry node
-├── launch/
-│   └── mapping.launch.py        # Main mapping launch file
-├── config/
-│   ├── odometry_params.yaml     # Robot dimensions
-│   ├── slam_toolbox_params.yaml # SLAM configuration
-│   └── ekf_params.yaml          # Sensor fusion config
-├── scripts/
-│   ├── launch_mapping_session.sh    # Unified launcher (robot)
-│   └── remote_launch_slam_rviz.sh   # Remote RViz launcher
-├── maps/                        # Saved maps directory
-├── rviz/
-│   └── mapping.rviz            # RViz configuration
-├── package.xml
-├── setup.py
-└── README.md
-```
-
 ## Topics
 
 ### Published
@@ -663,14 +667,21 @@ ogre-slam/
 
 ### TF Frames
 
+**Jetson (Real Robot):**
 ```
-map (from slam_toolbox)
+map (from slam_toolbox or amcl)
   └─ odom (from EKF or odometry_node)
       └─ base_link (robot center at wheel axle height)
-          ├─ laser (RPLIDAR: 0.30m up, 180° rotated - on 65mm posts)
-          ├─ front_camera (Isaac Sim camera: 0.15m forward, 0.10m up)
-          ├─ camera_link (Real robot RealSense D435: 0.15m forward, 0.10m up)
-          └─ imx477_camera_optical_frame (RPi camera)
+          ├─ laser (RPLIDAR: 0.30m up, 180° rotated)
+          └─ camera_link (RealSense D435: 0.15m forward, 0.10m up)
+```
+
+**Host Computer (Isaac Sim):**
+```
+odom (from Isaac Sim)
+  └─ base_link
+      ├─ laser (LIDAR: 0.30m up, 180° rotated)
+      └─ camera_link → camera_depth (optical frame)
 ```
 
 ## Troubleshooting
