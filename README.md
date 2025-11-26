@@ -937,15 +937,74 @@ This repository is part of the **Project Ogre** ecosystem for mecanum drive robo
 
 ### Using the Trained RL Policy
 
-The trained policy from ogre-lab can be used as a Nav2 local controller for improved velocity tracking:
+The trained policy from ogre-lab improves velocity tracking by learning the robot's dynamics. It sits between Nav2 and the robot.
+
+#### One-Time Setup
 
 ```bash
-# Install the policy controller (from ogre-lab)
+# Symlink the policy controller package (from ogre-lab)
 ln -sf ~/ogre-lab/ros2_controller ~/ros2_ws/src/ogre_policy_controller
-cd ~/ros2_ws && colcon build --packages-select ogre_policy_controller
 
-# Launch with policy controller
+# Install onnxruntime (required for policy inference)
+pip install onnxruntime
+
+# Build the package
+cd ~/ros2_ws
+colcon build --packages-select ogre_policy_controller --symlink-install
+source install/setup.bash
+```
+
+#### Testing with Isaac Sim
+
+**Terminal 1: Start Isaac Sim**
+- Open Isaac Sim
+- Load `~/ros2_ws/src/ogre-slam/usds/ogre.usd`
+- Press **Play** ▶️
+
+**Terminal 2: Launch the Policy Controller**
+```bash
+export ROS_DOMAIN_ID=42
+source ~/ros2_ws/install/setup.bash
 ros2 launch ogre_policy_controller policy_controller.launch.py
+```
+
+**Terminal 3: Send Test Commands**
+```bash
+export ROS_DOMAIN_ID=42
+
+# Test forward motion
+ros2 topic pub /policy_cmd_vel_in geometry_msgs/msg/Twist \
+    "{linear: {x: 0.2, y: 0.0, z: 0.0}, angular: {x: 0.0, y: 0.0, z: 0.0}}" -r 10
+
+# Test strafe left
+ros2 topic pub /policy_cmd_vel_in geometry_msgs/msg/Twist \
+    "{linear: {x: 0.0, y: 0.2, z: 0.0}, angular: {x: 0.0, y: 0.0, z: 0.0}}" -r 10
+
+# Test rotation
+ros2 topic pub /policy_cmd_vel_in geometry_msgs/msg/Twist \
+    "{linear: {x: 0.0, y: 0.0, z: 0.0}, angular: {x: 0.0, y: 0.0, z: 0.5}}" -r 10
+```
+
+**Terminal 4: Monitor Output (Optional)**
+```bash
+export ROS_DOMAIN_ID=42
+ros2 topic echo /cmd_vel
+```
+
+#### Integration with Nav2
+
+To use the policy with Nav2, remap Nav2's velocity output:
+
+```yaml
+# In your Nav2 params file
+controller_server:
+  ros__parameters:
+    cmd_vel_topic: "/policy_cmd_vel_in"
+```
+
+The data flow becomes:
+```
+Nav2 → /policy_cmd_vel_in → Policy Controller → /cmd_vel → Robot
 ```
 
 See [ogre-lab README](https://github.com/protomota/ogre-lab) for training instructions.
