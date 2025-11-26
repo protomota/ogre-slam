@@ -123,77 +123,18 @@ pip3 install Jetson.GPIO numpy
 
 Build maps using either the real robot or Isaac Sim simulation.
 
-### Quick Comparison: Real Robot vs Isaac Sim
+### Quick Comparison: Isaac Sim vs Real Robot
 
-| Aspect | Real Robot | Isaac Sim |
-|--------|------------|-----------|
-| **Location** | Run on Jetson (10.21.21.45) | Run on development computer |
-| **Hardware** | Real RPLIDAR + encoders | Simulated sensors |
-| **Launch Command** | `./scripts/launch_mapping_session.sh` | `ros2 launch ogre_slam mapping.launch.py` with sim flags |
-| **Teleop** | Web interface (http://10.21.21.45:8080) | ROS2 keyboard teleop |
-| **Odometry** | Encoder-based (`use_odometry:=true`) | From Isaac Sim (`use_odometry:=false`) |
-| **EKF Filtering** | Yes (`use_ekf:=true`) | No (`use_ekf:=false`) |
-| **Time Source** | System time | Simulation clock (`use_sim_time:=true`) |
+| Aspect | Isaac Sim | Real Robot |
+|--------|-----------|------------|
+| **Location** | Run on development computer | Run on Jetson (10.21.21.45) |
+| **Hardware** | Simulated sensors | Real RPLIDAR + encoders |
+| **Launch Command** | `ros2 launch ogre_slam mapping.launch.py` with sim flags | `./scripts/launch_mapping_session.sh` |
+| **Teleop** | ROS2 keyboard teleop | Web interface (http://10.21.21.45:8080) |
+| **Odometry** | From Isaac Sim (`use_odometry:=false`) | Encoder-based (`use_odometry:=true`) |
+| **EKF Filtering** | No (`use_ekf:=false`) | Yes (`use_ekf:=true`) |
+| **Time Source** | Simulation clock (`use_sim_time:=true`) | System time |
 | **ROS_DOMAIN_ID** | 42 | 42 |
-
----
-
-### Mapping on Real Robot
-
-**Prerequisites:**
-- Robot powered on and connected to network (10.21.21.45)
-- RPLIDAR connected and powered
-- Encoders wired to GPIO pins
-- ogre_teleop package installed
-
-**Step 1: Launch mapping session**
-
-On the Jetson:
-```bash
-cd ~/ros2_ws/src/ogre-slam
-./scripts/launch_mapping_session.sh
-```
-
-This launches:
-- RPLIDAR driver
-- Encoder-based odometry node
-- EKF sensor fusion
-- slam_toolbox (mapping mode)
-- RViz visualization
-- ogre_teleop web interface
-
-**Step 2: Drive the robot**
-
-Open browser on any device on the network:
-```
-http://10.21.21.45:8080
-```
-
-Drive slowly around the area:
-- Use smooth, controlled movements
-- Ensure good loop closures (revisit starting point)
-- Watch RViz to see map being built
-
-**Step 3: Save the map**
-
-When mapping is complete, in another terminal:
-```bash
-ros2 run nav2_map_server map_saver_cli -f ~/ros2_ws/src/ogre-slam/maps/my_map
-```
-
-This creates:
-- `my_map.yaml` - Map metadata
-- `my_map.pgm` - Map image
-
-Preview the saved map:
-```bash
-eog ~/ros2_ws/src/ogre-slam/maps/my_map.pgm
-```
-
-**Step 4: Stop the system**
-```bash
-# Press Ctrl+C in launch terminal
-```
 
 ---
 
@@ -266,6 +207,65 @@ eog ~/ros2_ws/src/ogre-slam/maps/isaac_sim_map.pgm
 **Step 4: Stop the system**
 ```bash
 # Press Ctrl+C in both terminals
+```
+
+---
+
+### Mapping on Real Robot
+
+**Prerequisites:**
+- Robot powered on and connected to network (10.21.21.45)
+- RPLIDAR connected and powered
+- Encoders wired to GPIO pins
+- ogre_teleop package installed
+
+**Step 1: Launch mapping session**
+
+On the Jetson:
+```bash
+cd ~/ros2_ws/src/ogre-slam
+./scripts/launch_mapping_session.sh
+```
+
+This launches:
+- RPLIDAR driver
+- Encoder-based odometry node
+- EKF sensor fusion
+- slam_toolbox (mapping mode)
+- RViz visualization
+- ogre_teleop web interface
+
+**Step 2: Drive the robot**
+
+Open browser on any device on the network:
+```
+http://10.21.21.45:8080
+```
+
+Drive slowly around the area:
+- Use smooth, controlled movements
+- Ensure good loop closures (revisit starting point)
+- Watch RViz to see map being built
+
+**Step 3: Save the map**
+
+When mapping is complete, in another terminal:
+```bash
+ros2 run nav2_map_server map_saver_cli -f ~/ros2_ws/src/ogre-slam/maps/my_map
+```
+
+This creates:
+- `my_map.yaml` - Map metadata
+- `my_map.pgm` - Map image
+
+Preview the saved map:
+```bash
+eog ~/ros2_ws/src/ogre-slam/maps/my_map.pgm
+```
+
+**Step 4: Stop the system**
+```bash
+# Press Ctrl+C in launch terminal
 ```
 
 ### Remote Visualization
