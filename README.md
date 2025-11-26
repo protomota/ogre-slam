@@ -885,6 +885,71 @@ Jetson Orin Nano has 8GB RAM. If SLAM crashes:
 - [ ] Waypoint navigation
 - [ ] Obstacle avoidance with RealSense depth
 
+## Related Projects
+
+### Project Ogre Ecosystem
+
+This repository is part of the **Project Ogre** ecosystem for mecanum drive robot navigation:
+
+| Repository | Purpose | Key Contents |
+|------------|---------|--------------|
+| **ogre-slam** (this repo) | SLAM & Navigation | ROS2 package, Nav2 config, robot USD models, sensor drivers |
+| **[ogre-lab](https://github.com/protomota/ogre-lab)** | RL policy training | Isaac Lab environment, trained models, ROS2 policy controller |
+
+### How They Work Together
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                           TRAINING (ogre-lab)                               │
+│  ┌──────────────┐    ┌──────────────┐    ┌──────────────┐                  │
+│  │ Isaac Lab    │───▶│ Train Policy │───▶│ Export ONNX  │                  │
+│  │ Environment  │    │ (RSL-RL/PPO) │    │ & JIT Models │                  │
+│  └──────────────┘    └──────────────┘    └──────────────┘                  │
+│         │                                        │                          │
+│         │ uses                                   │ produces                 │
+│         ▼                                        ▼                          │
+│  ogre_robot.usd                          models/policy.onnx                 │
+│  (from ogre-slam)                        models/policy.pt                   │
+└─────────────────────────────────────────────────────────────────────────────┘
+                                   │
+                                   │ deploy
+                                   ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                          DEPLOYMENT (ogre-slam)                             │
+│  ┌──────────────┐    ┌──────────────┐    ┌──────────────┐                  │
+│  │    Nav2      │───▶│   Policy     │───▶│ Robot/Isaac  │                  │
+│  │ (planning)   │    │  Controller  │    │     Sim      │                  │
+│  └──────────────┘    └──────────────┘    └──────────────┘                  │
+│                             │                                               │
+│                             │ runs                                          │
+│                             ▼                                               │
+│                      policy.onnx (from ogre-lab)                            │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+### Key Files Shared Between Repos
+
+| File | Location | Used By |
+|------|----------|---------|
+| `ogre_robot.usd` | ogre-slam/usds/ | ogre-lab training environment |
+| `ogre.usd` | ogre-slam/usds/ | Isaac Sim deployment testing |
+| `policy.onnx` | ogre-lab/models/ | ogre-slam policy controller (via ROS2 package) |
+
+### Using the Trained RL Policy
+
+The trained policy from ogre-lab can be used as a Nav2 local controller for improved velocity tracking:
+
+```bash
+# Install the policy controller (from ogre-lab)
+ln -sf ~/ogre-lab/ros2_controller ~/ros2_ws/src/ogre_policy_controller
+cd ~/ros2_ws && colcon build --packages-select ogre_policy_controller
+
+# Launch with policy controller
+ros2 launch ogre_policy_controller policy_controller.launch.py
+```
+
+See [ogre-lab README](https://github.com/protomota/ogre-lab) for training instructions.
+
 ## Contributing
 
 This is part of Project Ogre. For issues or contributions:
@@ -899,6 +964,7 @@ MIT License
 - **slam_toolbox**: Steve Macenski
 - **robot_localization**: Tom Moore
 - **RPLIDAR ROS**: SLAMTEC
+- **Isaac Lab**: NVIDIA (for RL training framework)
 
 ---
 
