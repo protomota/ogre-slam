@@ -4,9 +4,15 @@ SLAM mapping and autonomous navigation for Project Ogre mecanum drive robot.
 
 ## Overview
 
-This is a **standalone ROS2 package** - it declares all its own dependencies and can run independently.
+This is a **standalone ROS2 package** for SLAM and autonomous navigation on mecanum drive robots.
 
-It provides SLAM (Simultaneous Localization and Mapping) and autonomous navigation capabilities for mecanum drive robots using:
+**Two-Computer Setup:**
+- **Host Computer (Development)**: Runs Isaac Sim for simulation, RViz for visualization
+- **Jetson Orin Nano (Robot)**: Runs on the actual robot with real sensors
+
+**Workflow:** Develop and test in Isaac Sim on your host computer first, then deploy to the Jetson.
+
+**Components:**
 - **Wheel odometry** from 4 mecanum drive encoders (2 PPR Hall sensors, calibrated gear_ratio: 224.0)
 - **RPLIDAR A1** 2D laser scanner for mapping and localization
 - **RealSense D435** depth camera for 3D obstacle avoidance
@@ -63,9 +69,9 @@ M3 (RL) --- M2 (RR)
 
 ## Dependencies
 
-### System Packages (REQUIRED - Install First!)
+### System Packages (Both Computers)
 
-**⚠️ IMPORTANT:** Install these dependencies BEFORE building the package:
+**⚠️ IMPORTANT:** Install these dependencies BEFORE building the package on BOTH Host Computer and Jetson:
 
 ```bash
 sudo apt update
@@ -74,23 +80,29 @@ sudo apt install -y \
   ros-humble-robot-localization \
   ros-humble-nav2-map-server \
   ros-humble-nav2-lifecycle-manager \
-  ros-humble-tf2-tools
+  ros-humble-tf2-tools \
+  ros-humble-teleop-twist-keyboard
 ```
 
 **Note:** If you see errors about `packages.ros.org/ros` repository, ignore them - we only need ROS2 packages which will install correctly.
 
 ### Python Dependencies
 
-Required Python packages (installed automatically during build):
-- `Jetson.GPIO` - For GPIO encoder reading on Jetson hardware
-- `numpy` - For mecanum kinematics calculations
-
-**Manual installation (if needed):**
+**On Jetson only** (for GPIO encoder reading):
 ```bash
 pip3 install Jetson.GPIO numpy
 ```
 
+**On Host Computer** (for simulation):
+```bash
+pip3 install numpy
+```
+
+Note: `Jetson.GPIO` is only needed on the Jetson - it won't install on non-Jetson systems.
+
 ## Installation
+
+**Install on BOTH Host Computer and Jetson:**
 
 1. **Clone repository:**
    ```bash
@@ -100,9 +112,16 @@ pip3 install Jetson.GPIO numpy
 
 2. **Install dependencies** (see above)
 
-3. **Measure robot dimensions** (CRITICAL):
+3. **Build package:**
    ```bash
-   cd ogre-slam
+   cd ~/ros2_ws
+   colcon build --packages-select ogre_slam --symlink-install
+   source install/setup.bash
+   ```
+
+4. **Jetson only - Configure robot dimensions** (CRITICAL):
+   ```bash
+   cd ~/ros2_ws/src/ogre-slam
    nano config/odometry_params.yaml
    ```
 
@@ -112,33 +131,24 @@ pip3 install Jetson.GPIO numpy
    - `track_width`: Distance between left and right wheels (meters)
    - `gear_ratio`: Motor gear ratio (see Gear Ratio Calibration below)
 
-4. **Build package:**
-   ```bash
-   cd ~/ros2_ws
-   colcon build --packages-select ogre_slam --symlink-install
-   source install/setup.bash
-   ```
-
 ## SLAM Mapping
 
-Build maps using either the real robot or Isaac Sim simulation.
+Build maps using Isaac Sim simulation first, then deploy to the real robot.
 
-### Quick Comparison: Isaac Sim vs Real Robot
+### Quick Comparison: Host Computer vs Jetson
 
-| Aspect | Isaac Sim | Real Robot |
-|--------|-----------|------------|
-| **Location** | Run on development computer | Run on Jetson (10.21.21.45) |
+| Aspect | Host Computer (Isaac Sim) | Jetson (Real Robot) |
+|--------|---------------------------|---------------------|
+| **Where** | Your development computer | Robot (10.21.21.45) |
 | **Hardware** | Simulated sensors | Real RPLIDAR + encoders |
 | **Launch Command** | `ros2 launch ogre_slam mapping.launch.py` with sim flags | `./scripts/launch_mapping_session.sh` |
 | **Teleop** | ROS2 keyboard teleop | Web interface (http://10.21.21.45:8080) |
-| **Odometry** | From Isaac Sim (`use_odometry:=false`) | Encoder-based (`use_odometry:=true`) |
-| **EKF Filtering** | No (`use_ekf:=false`) | Yes (`use_ekf:=true`) |
-| **Time Source** | Simulation clock (`use_sim_time:=true`) | System time |
+| **Odometry** | From Isaac Sim (`use_sim_time:=true`) | Encoder-based (default) |
 | **ROS_DOMAIN_ID** | 42 | 42 |
 
 ---
 
-### Mapping in Isaac Sim
+### Mapping in Isaac Sim (Host Computer)
 
 **Prerequisites:**
 - Isaac Sim running with ogre.usd scene
@@ -148,7 +158,7 @@ Build maps using either the real robot or Isaac Sim simulation.
 
 **Step 1: Launch SLAM**
 
-On your development computer:
+On your **Host Computer**:
 ```bash
 cd ~/ros2_ws
 source install/setup.bash
@@ -211,7 +221,7 @@ eog ~/ros2_ws/src/ogre-slam/maps/isaac_sim_map.pgm
 
 ---
 
-### Mapping on Real Robot
+### Mapping on Real Robot (Jetson)
 
 **Prerequisites:**
 - Robot powered on and connected to network (10.21.21.45)
@@ -221,7 +231,7 @@ eog ~/ros2_ws/src/ogre-slam/maps/isaac_sim_map.pgm
 
 **Step 1: Launch mapping session**
 
-On the Jetson:
+On the **Jetson**:
 ```bash
 cd ~/ros2_ws/src/ogre-slam
 ./scripts/launch_mapping_session.sh
@@ -314,11 +324,24 @@ ros2 launch ogre_teleop web_teleop.launch.py
 
 ## Navigation Mode (Autonomous Waypoint Navigation)
 
+Navigate using a saved map. Can run on either Host Computer (Isaac Sim) or Jetson (real robot).
+
 **Prerequisites:**
 1. Install Nav2 packages (see [NAV2_README.md](docs/NAV2_README.md))
 2. Have a saved map from mapping mode (see SLAM Mapping above)
 
-**Launch autonomous navigation:**
+### Navigation in Isaac Sim (Host Computer)
+
+```bash
+cd ~/ros2_ws && source install/setup.bash
+export ROS_DOMAIN_ID=42
+ros2 launch ogre_slam navigation.launch.py \
+  map:=~/ros2_ws/src/ogre-slam/maps/isaac_sim_map.yaml \
+  use_sim_time:=true
+```
+
+### Navigation on Real Robot (Jetson)
+
 ```bash
 cd ~/ros2_ws && source install/setup.bash
 ros2 launch ogre_slam navigation.launch.py map:=~/ros2_ws/src/ogre-slam/maps/my_map.yaml
@@ -328,21 +351,21 @@ This launches:
 1. **Localization**: AMCL with saved map
 2. **Sensors**: RPLIDAR + RealSense D435 pointcloud
 3. **Nav2 Stack**: Path planning, obstacle avoidance, controller
-4. **Control**: Web interface for manual override
+4. **Control**: Web interface for manual override (Jetson only)
 
 **Navigate to waypoints:**
 1. In RViz, click "2D Pose Estimate" and set robot's initial position
 2. Click "Nav2 Goal" button and click destination on map
-3. Robot autonomously navigates, avoiding obstacles with RealSense depth
-4. Manual override always available at `http://10.21.21.45:8080`
+3. Robot autonomously navigates, avoiding obstacles with depth camera
+4. Manual override available at `http://10.21.21.45:8080` (Jetson only)
 
 **📖 Full documentation:** See [NAV2_README.md](docs/NAV2_README.md) for complete guide
 
 ---
 
-## Isaac Sim Simulation
+## Isaac Sim Simulation (Host Computer Only)
 
-For testing with NVIDIA Isaac Sim 5.0:
+For testing with NVIDIA Isaac Sim 5.0 on your development computer:
 
 ### ROS2 Domain Configuration
 
