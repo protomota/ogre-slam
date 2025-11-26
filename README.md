@@ -20,9 +20,9 @@ It provides SLAM (Simultaneous Localization and Mapping) and autonomous navigati
 - ✅ Async SLAM mapping optimized for Jetson Orin Nano
 - ✅ Sensor fusion (EKF) to handle low encoder resolution
 - ✅ Map saving/loading for autonomous navigation
-- ✅ **NEW:** Autonomous waypoint navigation with Nav2
-- ✅ **NEW:** 3D obstacle avoidance using RealSense D435 pointcloud
-- ✅ **NEW:** Mecanum-aware path planning (omnidirectional movement)
+- ✅ Autonomous waypoint navigation with Nav2
+- ✅ 3D obstacle avoidance using RealSense D435 pointcloud
+- ✅ Mecanum-aware path planning (omnidirectional movement)
 - ✅ RViz visualization with Nav2 panel
 - ✅ Manual override via web teleop interface
 
@@ -121,7 +121,7 @@ pip3 install Jetson.GPIO numpy
 
 ## Quick Start
 
-### Navigation Mode (Autonomous Waypoint Navigation) ⭐ NEW!
+### Navigation Mode (Autonomous Waypoint Navigation)
 
 **Prerequisites:**
 1. Install Nav2 packages (see NAV2_README.md)
