@@ -119,36 +119,6 @@ pip3 install Jetson.GPIO numpy
    source install/setup.bash
    ```
 
-## Quick Start
-
-### Navigation Mode (Autonomous Waypoint Navigation)
-
-**Prerequisites:**
-1. Install Nav2 packages (see NAV2_README.md)
-2. Have a saved map from mapping mode
-
-**Launch autonomous navigation:**
-```bash
-cd ~/ros2_ws && source install/setup.bash
-ros2 launch ogre_slam navigation.launch.py map:=~/ros2_ws/src/ogre-slam/maps/my_map.yaml
-```
-
-This launches:
-1. **Localization**: slam_toolbox with saved map
-2. **Sensors**: RPLIDAR + RealSense D435 pointcloud
-3. **Nav2 Stack**: Path planning, obstacle avoidance, controller
-4. **Control**: Web interface for manual override
-
-**Navigate to waypoints:**
-1. In RViz, click "2D Pose Estimate" and set robot's initial position
-2. Click "Nav2 Goal" button and click destination on map
-3. Robot autonomously navigates, avoiding obstacles with RealSense depth
-4. Manual override always available at `http://10.21.21.45:8080`
-
-**📖 Full documentation:** See [NAV2_README.md](NAV2_README.md) for complete guide
-
----
-
 ## SLAM Mapping
 
 Build maps using either the real robot or Isaac Sim simulation.
@@ -339,6 +309,36 @@ ros2 launch ogre_slam mapping.launch.py rplidar_model:=a1
 # Terminal 2: Teleop separately
 ros2 launch ogre_teleop web_teleop.launch.py
 ```
+
+---
+
+## Navigation Mode (Autonomous Waypoint Navigation)
+
+**Prerequisites:**
+1. Install Nav2 packages (see [NAV2_README.md](docs/NAV2_README.md))
+2. Have a saved map from mapping mode (see SLAM Mapping above)
+
+**Launch autonomous navigation:**
+```bash
+cd ~/ros2_ws && source install/setup.bash
+ros2 launch ogre_slam navigation.launch.py map:=~/ros2_ws/src/ogre-slam/maps/my_map.yaml
+```
+
+This launches:
+1. **Localization**: AMCL with saved map
+2. **Sensors**: RPLIDAR + RealSense D435 pointcloud
+3. **Nav2 Stack**: Path planning, obstacle avoidance, controller
+4. **Control**: Web interface for manual override
+
+**Navigate to waypoints:**
+1. In RViz, click "2D Pose Estimate" and set robot's initial position
+2. Click "Nav2 Goal" button and click destination on map
+3. Robot autonomously navigates, avoiding obstacles with RealSense depth
+4. Manual override always available at `http://10.21.21.45:8080`
+
+**📖 Full documentation:** See [NAV2_README.md](docs/NAV2_README.md) for complete guide
+
+---
 
 ## Isaac Sim Simulation
 
