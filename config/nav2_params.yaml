@@ -171,7 +171,8 @@ local_costmap:
           obstacle_max_range: 11.5
           obstacle_min_range: 0.0
         pointcloud:
-          topic: /camera/camera/depth/color/points
+          topic: /camera_points
+          sensor_frame: camera_depth
           max_obstacle_height: 2.0
           min_obstacle_height: 0.05
           clearing: True
@@ -212,7 +213,8 @@ global_costmap:
           obstacle_max_range: 11.5
           obstacle_min_range: 0.0
         pointcloud:
-          topic: /camera/camera/depth/color/points
+          topic: /camera_points
+          sensor_frame: camera_depth
           max_obstacle_height: 2.0
           min_obstacle_height: 0.05
           clearing: True

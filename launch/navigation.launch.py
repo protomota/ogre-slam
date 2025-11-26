@@ -168,23 +168,28 @@ def generate_launch_description():
 
     # 3. Static TF: base_link → camera_link
     # Measured position: camera is 15cm forward, 10cm up from robot center
+    # NOTE: Skip for Isaac Sim - it publishes its own TF
     static_tf_camera = Node(
         package='tf2_ros',
         executable='static_transform_publisher',
         name='base_to_camera_broadcaster',
-        arguments=['0.15', '0.0', '0.10', '0.0', '0.0', '0.0', 'base_link', 'camera_link']
+        arguments=['0.15', '0.0', '0.10', '0.0', '0.0', '0.0', 'base_link', 'camera_link'],
+        condition=UnlessCondition(use_sim_time)
     )
 
     # 4. Static TF: base_link → laser (RPLIDAR)
     # Mounted at front-center, 27cm up, 180° rotated
+    # NOTE: Skip for Isaac Sim - it publishes its own TF
     static_tf_laser = Node(
         package='tf2_ros',
         executable='static_transform_publisher',
         name='base_to_laser_broadcaster',
-        arguments=['0.0', '0.0', '0.27', '0.0', '0.0', '3.14159', 'base_link', 'laser']
+        arguments=['0.0', '0.0', '0.27', '0.0', '0.0', '3.14159', 'base_link', 'laser'],
+        condition=UnlessCondition(use_sim_time)
     )
 
     # 5. Encoder-based odometry node (conditional)
+    # NOTE: Skip for Isaac Sim - it publishes odometry directly
     odometry_node = Node(
         package='ogre_slam',
         executable='odometry_node',
@@ -192,10 +197,13 @@ def generate_launch_description():
         output='screen',
         parameters=[odometry_params_file],
         emulate_tty=True,
-        condition=IfCondition(use_odometry)
+        condition=IfCondition(PythonExpression([
+            "'", use_odometry, "' == 'true' and '", use_sim_time, "' == 'false'"
+        ]))
     )
 
     # 6. robot_localization EKF node (sensor fusion)
+    # NOTE: Skip for Isaac Sim - it publishes odometry directly
     ekf_node = Node(
         package='robot_localization',
         executable='ekf_node',
@@ -204,7 +212,9 @@ def generate_launch_description():
         parameters=[ekf_params_file],
         remappings=[('odometry/filtered', '/odometry/filtered')],
         emulate_tty=True,
-        condition=IfCondition(use_ekf)
+        condition=IfCondition(PythonExpression([
+            "'", use_ekf, "' == 'true' and '", use_sim_time, "' == 'false'"
+        ]))
     )
 
     # 7-8. Map server + slam_toolbox localization (loads saved map with path expansion)

@@ -15,7 +15,7 @@ from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription
 from launch.conditions import IfCondition, UnlessCondition
 from launch.launch_description_sources import PythonLaunchDescriptionSource
-from launch.substitutions import LaunchConfiguration
+from launch.substitutions import LaunchConfiguration, PythonExpression
 from launch_ros.actions import Node
 
 
@@ -81,14 +81,17 @@ def generate_launch_description():
     use_sim_time = LaunchConfiguration('use_sim_time')
 
     # 1. RPLIDAR launch
+    # NOTE: Skip for Isaac Sim - it publishes /scan directly
     rplidar_launch = IncludeLaunchDescription(
         PythonLaunchDescriptionSource([
             os.path.join(rplidar_dir, 'launch'),
             '/rplidar_', rplidar_model, '_launch.py'
-        ])
+        ]),
+        condition=UnlessCondition(use_sim_time)
     )
 
     # 2. Encoder-based odometry node
+    # NOTE: Skip for Isaac Sim - it publishes odometry directly
     odometry_node = Node(
         package='ogre_slam',
         executable='odometry_node',
@@ -96,10 +99,13 @@ def generate_launch_description():
         output='screen',
         parameters=[odometry_params_file],
         emulate_tty=True,
-        condition=IfCondition(use_odometry)
+        condition=IfCondition(PythonExpression([
+            "'", use_odometry, "' == 'true' and '", use_sim_time, "' == 'false'"
+        ]))
     )
 
     # 3. robot_localization EKF node (sensor fusion)
+    # NOTE: Skip for Isaac Sim - it publishes odometry directly
     ekf_node = Node(
         package='robot_localization',
         executable='ekf_node',
@@ -109,7 +115,9 @@ def generate_launch_description():
         remappings=[
             ('odometry/filtered', '/odometry/filtered')
         ],
-        condition=IfCondition(use_ekf)
+        condition=IfCondition(PythonExpression([
+            "'", use_ekf, "' == 'true' and '", use_sim_time, "' == 'false'"
+        ]))
     )
 
     # 4. slam_toolbox async node (mapping mode)
@@ -131,7 +139,8 @@ def generate_launch_description():
         emulate_tty=True
     )
 
-    # 6. Lifecycle manager for SLAM nodes
+    # 6. Lifecycle manager for map_saver_server only
+    # NOTE: slam_toolbox is NOT a lifecycle node, only map_saver_server is
     lifecycle_manager = Node(
         package='nav2_lifecycle_manager',
         executable='lifecycle_manager',
@@ -139,7 +148,7 @@ def generate_launch_description():
         output='screen',
         parameters=[{
             'autostart': True,
-            'node_names': ['slam_toolbox', 'map_saver_server']
+            'node_names': ['map_saver_server']
         }],
         emulate_tty=True
     )
