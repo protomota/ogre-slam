@@ -469,28 +469,29 @@ The Isaac Sim robot requires an action graph to subscribe to `/cmd_vel` and cont
 3. **Break 3-Vector** (linear) → Outputs: x (vx), y (vy), z (unused)
 4. **Break 3-Vector** (angular) → Outputs: x (unused), y (unused), z (vtheta)
 5. **Math Nodes** → Compute mecanum wheel velocities (see equations below)
-6. **Multiply Nodes** → Negate right wheel velocities: `wheel_fr * -1`, `wheel_rr * -1`
-7. **Make Array** → Order: `[wheel_fl, -wheel_fr, wheel_rl, -wheel_rr]`
+6. **Multiply Nodes** → Negate ALL wheel velocities: `wheel * -1` for all 4 wheels
+7. **Make Array** → Order: `[-wheel_fl, -wheel_fr, -wheel_rl, -wheel_rr]`
 8. **Articulation Controller** → Apply velocities to joints
 
 **Mecanum Wheel Equations (for ogre.usd):**
 ```
 L = (wheelbase + trackwidth) / 2 = (0.095 + 0.205) / 2 = 0.15
 
-wheel_fl =  (vx - vy - vtheta * L)      # fl_joint (left front)
-wheel_fr = -(vx + vy + vtheta * L)      # fr_joint (right front, NEGATED)
-wheel_rl =  (vx + vy - vtheta * L)      # rl_joint (left rear)
-wheel_rr = -(vx - vy + vtheta * L)      # rr_joint (right rear, NEGATED)
+# ALL wheels negated because USD joint axes are inverted (negative = forward)
+wheel_fl = -(vx - vy - vtheta * L)      # fl_joint (ALL NEGATED)
+wheel_fr = -(vx + vy + vtheta * L)      # fr_joint (ALL NEGATED)
+wheel_rl = -(vx + vy - vtheta * L)      # rl_joint (ALL NEGATED)
+wheel_rr = -(vx - vy + vtheta * L)      # rr_joint (ALL NEGATED)
 ```
 
 **Important Notes:**
 - **Joint names for ogre.usd:** `fl_joint`, `fr_joint`, `rl_joint`, `rr_joint`
 - Velocity array order must match joint names array order in Articulation Controller: `["fl_joint", "fr_joint", "rl_joint", "rr_joint"]`
-- **Right wheels (fr_joint, rr_joint) must be negated** due to opposite joint axis orientation
+- **ALL wheels must be negated** because USD joint axes are inverted (negative velocity = forward motion)
 - Robot articulation path: `/World/Ogre/base_link` (or check your USD stage)
 
 **RL Policy Deployment:**
-When deploying a trained RL policy from ogre-lab, the Isaac Sim action graph must also negate FR and RR wheel velocities. The training environment applies the same sign corrections, so the policy outputs normalized wheel velocities where `[+,+,+,+]` = forward motion. Without matching corrections in the action graph, the robot will rotate instead of moving forward. See the [ogre-lab README](https://github.com/protomota/ogre-lab#training-notes) for details.
+When deploying a trained RL policy from ogre-lab, the Isaac Sim action graph must negate ALL wheel velocities. The training environment applies the same sign corrections, so the policy outputs normalized wheel velocities where `[+,+,+,+]` = forward motion. Without matching corrections in the action graph, the robot will move backward instead of forward. See the [ogre-lab README](https://github.com/protomota/ogre-lab#training-notes) for details.
 
 ### Isaac Sim Wheel Joint Configuration
 
