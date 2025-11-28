@@ -981,17 +981,17 @@ ros2 launch ogre_policy_controller policy_controller.launch.py
 ```bash
 export ROS_DOMAIN_ID=42
 
-# Test forward motion (0.15 m/s - ~60% of max 0.25)
+# Test forward motion (0.5 m/s)
 ros2 topic pub /policy_cmd_vel_in geometry_msgs/msg/Twist \
-    "{linear: {x: 0.15, y: 0.0, z: 0.0}, angular: {x: 0.0, y: 0.0, z: 0.0}}" -r 10
+    "{linear: {x: 0.5, y: 0.0, z: 0.0}, angular: {x: 0.0, y: 0.0, z: 0.0}}" -r 10
 
-# Test strafe left (0.15 m/s)
+# Test strafe left (0.5 m/s)
 ros2 topic pub /policy_cmd_vel_in geometry_msgs/msg/Twist \
-    "{linear: {x: 0.0, y: 0.15, z: 0.0}, angular: {x: 0.0, y: 0.0, z: 0.0}}" -r 10
+    "{linear: {x: 0.0, y: 0.5, z: 0.0}, angular: {x: 0.0, y: 0.0, z: 0.0}}" -r 10
 
-# Test rotation (0.5 rad/s - half of max 1.0)
+# Test rotation (1.0 rad/s)
 ros2 topic pub /policy_cmd_vel_in geometry_msgs/msg/Twist \
-    "{linear: {x: 0.0, y: 0.0, z: 0.0}, angular: {x: 0.0, y: 0.0, z: 0.5}}" -r 10
+    "{linear: {x: 0.0, y: 0.0, z: 0.0}, angular: {x: 0.0, y: 0.0, z: 1.0}}" -r 10
 ```
 
 **Terminal 4: Monitor Output (Optional)**
