@@ -75,6 +75,17 @@ ogre-slam/
 │   ├── encoder_reader.py        # GPIO encoder reading
 │   ├── mecanum_odometry.py      # Mecanum kinematics
 │   └── odometry_node.py         # ROS2 odometry node
+├── ogre_policy_controller/      # RL policy deployment (ROS2 package)
+│   ├── ogre_policy_controller/  # Python module
+│   │   └── policy_controller_node.py
+│   ├── config/
+│   │   └── policy_controller_params.yaml
+│   ├── launch/
+│   │   └── policy_controller.launch.py
+│   ├── models/                  # Trained policy files
+│   │   ├── policy.onnx
+│   │   └── policy.pt
+│   └── package.xml
 ├── launch/
 │   ├── mapping.launch.py        # SLAM mapping launch file
 │   └── navigation.launch.py     # Nav2 navigation launch file
