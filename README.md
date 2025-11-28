@@ -1018,15 +1018,6 @@ Nav2 → /policy_cmd_vel_in → Policy Controller → /cmd_vel → Robot
 
 See [ogre-lab README](https://github.com/protomota/ogre-lab) for training instructions.
 
-## Contributing
-
-This is part of Project Ogre. For issues or contributions:
-- GitHub: https://github.com/protomota/ogre-slam
-
-## License
-
-MIT License
-
 ## Acknowledgments
 
 - **slam_toolbox**: Steve Macenski
