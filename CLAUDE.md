@@ -489,6 +489,9 @@ wheel_rr = -(vx - vy + vtheta * L)      # rr_joint (right rear, NEGATED)
 - **Right wheels (fr_joint, rr_joint) must be negated** due to opposite joint axis orientation
 - Robot articulation path: `/World/Ogre/base_link` (or check your USD stage)
 
+**RL Policy Deployment:**
+When deploying a trained RL policy from ogre-lab, the Isaac Sim action graph must also negate FR and RR wheel velocities. The training environment applies the same sign corrections, so the policy outputs normalized wheel velocities where `[+,+,+,+]` = forward motion. Without matching corrections in the action graph, the robot will rotate instead of moving forward. See the [ogre-lab README](https://github.com/protomota/ogre-lab#training-notes) for details.
+
 ### Isaac Sim Wheel Joint Configuration
 
 Each wheel joint (RevoluteJoint) requires:
