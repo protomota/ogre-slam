@@ -965,27 +965,33 @@ source install/setup.bash
 - Press **Play** ▶️
 
 **Terminal 2: Launch the Policy Controller**
+
+> **IMPORTANT:** If you were just training in the `env_isaaclab` conda environment, you MUST run `conda deactivate` first! The ROS2 policy controller uses system Python, not conda.
+
 ```bash
+conda deactivate  # Exit Isaac Lab conda env if active
 export ROS_DOMAIN_ID=42
 source ~/ros2_ws/install/setup.bash
 ros2 launch ogre_policy_controller policy_controller.launch.py
 ```
 
+> **Note:** The policy defaults to `use_policy:=true` (runs the neural network). To use pass-through mode (just forward Twist commands without the policy), add `use_policy:=false`.
+
 **Terminal 3: Send Test Commands**
 ```bash
 export ROS_DOMAIN_ID=42
 
-# Test forward motion (4.0 m/s - half of max 8.0)
+# Test forward motion (0.15 m/s - ~60% of max 0.25)
 ros2 topic pub /policy_cmd_vel_in geometry_msgs/msg/Twist \
-    "{linear: {x: 4.0, y: 0.0, z: 0.0}, angular: {x: 0.0, y: 0.0, z: 0.0}}" -r 10
+    "{linear: {x: 0.15, y: 0.0, z: 0.0}, angular: {x: 0.0, y: 0.0, z: 0.0}}" -r 10
 
-# Test strafe left (4.0 m/s)
+# Test strafe left (0.15 m/s)
 ros2 topic pub /policy_cmd_vel_in geometry_msgs/msg/Twist \
-    "{linear: {x: 0.0, y: 4.0, z: 0.0}, angular: {x: 0.0, y: 0.0, z: 0.0}}" -r 10
+    "{linear: {x: 0.0, y: 0.15, z: 0.0}, angular: {x: 0.0, y: 0.0, z: 0.0}}" -r 10
 
-# Test rotation (3.0 rad/s - half of max 6.0)
+# Test rotation (0.5 rad/s - half of max 1.0)
 ros2 topic pub /policy_cmd_vel_in geometry_msgs/msg/Twist \
-    "{linear: {x: 0.0, y: 0.0, z: 0.0}, angular: {x: 0.0, y: 0.0, z: 3.0}}" -r 10
+    "{linear: {x: 0.0, y: 0.0, z: 0.0}, angular: {x: 0.0, y: 0.0, z: 0.5}}" -r 10
 ```
 
 **Terminal 4: Monitor Output (Optional)**
