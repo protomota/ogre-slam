@@ -945,8 +945,8 @@ The trained policy from ogre-lab improves velocity tracking by learning the robo
 # IMPORTANT: Exit conda environment first (ROS2 uses system Python, not conda)
 conda deactivate
 
-# Symlink the policy controller package (from ogre-lab)
-ln -sf ~/ogre-lab/ros2_controller ~/ros2_ws/src/ogre_policy_controller
+# Symlink the policy controller package (already in ogre-slam)
+ln -sf ~/ros2_ws/src/ogre-slam/ogre_policy_controller ~/ros2_ws/src/ogre_policy_controller
 
 # Install onnxruntime (required for policy inference)
 pip install onnxruntime
