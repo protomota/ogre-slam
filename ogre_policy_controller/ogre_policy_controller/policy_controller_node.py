@@ -138,6 +138,8 @@ class PolicyControllerNode(Node):
         # Publisher based on output mode
         if self.output_mode == 'twist':
             self.output_pub = self.create_publisher(Twist, output_topic, 10)
+        elif self.output_mode == 'joint_state':
+            self.output_pub = self.create_publisher(JointState, '/joint_command', 10)
         else:
             self.output_pub = self.create_publisher(Float32MultiArray, output_topic, 10)
 
@@ -235,13 +237,13 @@ class PolicyControllerNode(Node):
             [3-5]: Current velocity (vx, vy, vtheta)
             [6-9]: Wheel velocities in PHYSICAL order [FR, RR, RL, FL]
 
-        Sign corrections applied to match training:
-            - FR (index 0) and RR (index 1) are negated
+        Sign corrections applied to match output corrections:
+            - FR (index 0) and FL (index 3) are negated (front wheels)
         """
-        # Apply sign corrections to wheel velocities (match training env)
+        # Apply sign corrections to wheel velocities (match output corrections)
         corrected_wheel_vel = self.wheel_vel.copy()
-        corrected_wheel_vel[0] *= -1  # FR
-        corrected_wheel_vel[1] *= -1  # RR
+        corrected_wheel_vel[0] *= -1  # FR - front wheel
+        corrected_wheel_vel[3] *= -1  # FL - front wheel
 
         obs = np.concatenate([
             self.target_vel,
@@ -266,23 +268,28 @@ class PolicyControllerNode(Node):
     def _wheel_vel_to_twist(self, wheel_vel: np.ndarray) -> Twist:
         """Convert wheel velocities to Twist using forward kinematics.
 
+        Policy outputs in PHYSICAL order: [FR, RR, RL, FL] (indices 0,1,2,3)
+        Policy outputs are in NORMALIZED space where positive = forward for all wheels.
+
+        The training environment applies sign corrections:
+        - FR and RR are negated before sending to physics
+        - So policy positive → negative joint velocity for right wheels
+
+        We need to UN-normalize (apply same corrections) before FK:
+        - FR (index 0): negate
+        - RR (index 1): negate
+
         Mecanum forward kinematics:
             vx = (w_fl + w_fr + w_rl + w_rr) * R / 4
             vy = (-w_fl + w_fr + w_rl - w_rr) * R / 4
             vtheta = (-w_fl + w_fr - w_rl + w_rr) * R / (4 * L)
-
-        Where:
-            w_fl, w_fr, w_rl, w_rr = wheel angular velocities (rad/s)
-            R = wheel radius
-            L = (wheelbase + track_width) / 2
-
-        The policy outputs wheel velocities directly without sign corrections.
-        Isaac Sim action graph handles any joint axis corrections for deployment.
         """
-        w_fl = wheel_vel[0]
-        w_fr = wheel_vel[1]
+        # Policy output order: [FR, RR, RL, FL] in normalized space
+        # Apply sign corrections to convert to physical joint space
+        w_fr = -wheel_vel[0]  # Negate FR (right wheel)
+        w_rr = -wheel_vel[1]  # Negate RR (right wheel)
         w_rl = wheel_vel[2]
-        w_rr = wheel_vel[3]
+        w_fl = wheel_vel[3]
 
         R = self.wheel_radius
         L = self.L
@@ -327,6 +334,14 @@ class PolicyControllerNode(Node):
             if self.output_mode == 'twist':
                 twist_msg = Twist()  # All zeros by default
                 self.output_pub.publish(twist_msg)
+            elif self.output_mode == 'joint_state':
+                msg = JointState()
+                msg.header.stamp = self.get_clock().now().to_msg()
+                msg.name = list(self.wheel_joint_names)
+                msg.velocity = [0.0, 0.0, 0.0, 0.0]
+                msg.position = []
+                msg.effort = []
+                self.output_pub.publish(msg)
             else:
                 msg = Float32MultiArray()
                 msg.data = [0.0, 0.0, 0.0, 0.0]
@@ -338,8 +353,10 @@ class PolicyControllerNode(Node):
         actions = self._run_policy(obs)
 
         # Scale actions to wheel velocities (rad/s)
-        # Note: No clipping - let policy output full range
         wheel_velocities = actions * self.action_scale
+        # Clamp to prevent aggressive velocities that cause flipping
+        max_wheel_vel = 8.0  # rad/s - safe limit for stability
+        wheel_velocities = np.clip(wheel_velocities, -max_wheel_vel, max_wheel_vel)
 
         # Debug logging (every 30 iterations = 1 second)
         if not hasattr(self, '_debug_counter'):
@@ -357,6 +374,21 @@ class PolicyControllerNode(Node):
             # Convert wheel velocities back to Twist
             twist_msg = self._wheel_vel_to_twist(wheel_velocities)
             self.output_pub.publish(twist_msg)
+        elif self.output_mode == 'joint_state':
+            # Publish as JointState for direct joint control in Isaac Sim
+            # Policy outputs in normalized space (positive = forward for all wheels)
+            # Negate FRONT wheels (FR index 0, FL index 3) for correct direction
+            corrected_velocities = wheel_velocities.copy()
+            corrected_velocities[0] *= -1  # FR - front wheel
+            corrected_velocities[3] *= -1  # FL - front wheel
+
+            msg = JointState()
+            msg.header.stamp = self.get_clock().now().to_msg()
+            msg.name = list(self.wheel_joint_names)  # [fr_joint, rr_joint, rl_joint, fl_joint]
+            msg.velocity = corrected_velocities.tolist()
+            msg.position = []  # Not used
+            msg.effort = []  # Not used
+            self.output_pub.publish(msg)
         else:
             # Publish raw wheel velocities
             msg = Float32MultiArray()

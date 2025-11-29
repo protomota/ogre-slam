@@ -435,6 +435,167 @@ Languages:
 ✅ Real-time obstacle avoidance
 ✅ Proper AMCL localization
 
+## RL Policy Controller Integration (November 2025)
+
+### Overview
+
+Integration of trained RL policy from Isaac Lab (ogre-lab) for velocity tracking control. The policy learns to convert velocity commands (vx, vy, vtheta) to optimal wheel velocities for the mecanum drive robot.
+
+### Architecture
+
+```
+/policy_cmd_vel_in (Twist) → Policy Controller → /joint_command (JointState) → Isaac Sim
+                                    ↑
+                              ONNX Policy
+                                    ↑
+                         Observations: [target_vel, current_vel, wheel_vel]
+```
+
+### Issues Discovered and Solutions
+
+#### 1. Joint Order Mismatch
+
+**Problem:** Isaac Lab's `find_joints(["fl_joint", "fr_joint", "rl_joint", "rr_joint"])` returns joints in PHYSICAL order `[FR, RR, RL, FL]` (indices 0,1,2,3), NOT the query order.
+
+**Impact:** Policy outputs and observations were being mapped incorrectly.
+
+**Solution:** Updated both training environment and ROS2 controller to use physical order:
+```python
+# Correct order: [FR, RR, RL, FL] = indices [0, 1, 2, 3]
+wheel_joint_names = ['fr_joint', 'rr_joint', 'rl_joint', 'fl_joint']
+```
+
+#### 2. Sign Corrections for Right Wheels
+
+**Problem:** Right wheels (FR, RR) have opposite joint axis orientation in Isaac Sim. Positive velocity spins them backward.
+
+**Training Environment Solution:**
+```python
+# In _apply_action():
+corrected_actions[:, 0] *= -1  # FR
+corrected_actions[:, 1] *= -1  # RR
+
+# In _get_observations():
+joint_vel[:, 0] *= -1  # FR
+joint_vel[:, 1] *= -1  # RR
+```
+
+**ROS2 Controller:** Must apply same sign corrections to observations and NOT to outputs (Isaac Sim action graph handles it).
+
+#### 3. Twist vs JointState Output Mode
+
+**Initial Approach:** Convert policy wheel velocities → Twist → publish to `/cmd_vel` → Isaac Sim IK → wheel velocities.
+
+**Problem:** The round-trip conversion (wheel→Twist→wheel) loses information. The policy outputs wheel velocities directly, and mecanum forward kinematics produces incorrect Twist when wheel velocities don't follow standard patterns.
+
+**Solution:** Added `joint_state` output mode that publishes directly to `/joint_command`:
+- Isaac Sim uses "ROS2 Subscribe Joint State" node
+- Connects Velocity Command output → Articulation Controller
+- Bypasses Twist conversion entirely
+- Matches training environment's direct joint control
+
+**Configuration:**
+```yaml
+# config/policy_controller_params.yaml
+output_mode: "joint_state"  # Direct joint control for Isaac Sim
+```
+
+#### 4. Action Scale Mismatch (ROOT CAUSE of velocity issues)
+
+**Problem:**
+- Training used `action_scale: 20.0` (policy outputs [-1,1] scaled to [-20,20] rad/s)
+- Robot flips at wheel velocities > 8 rad/s
+- Clamping at 8 rad/s limits achievable speed
+
+**Math:**
+```
+Max wheel velocity: 8 rad/s
+Wheel radius: 0.04 m
+Max linear velocity: 8 * 0.04 = 0.32 m/s
+
+But training target was 1.0 m/s, requiring ~25 rad/s
+```
+
+**Solution Required:** Retrain policy with `action_scale: 8.0` so the policy learns to operate within physical limits from the start. The policy should never need clamping if trained correctly.
+
+**Training config change needed:**
+```python
+# In ogre_navigation_env.py
+action_scale: float = 8.0  # Changed from 20.0
+```
+
+**Corresponding velocity targets:**
+```python
+max_lin_vel: float = 0.3   # Achievable with 8 rad/s wheels
+max_ang_vel: float = 1.0   # Reduced for stability
+```
+
+### Files Modified
+
+**ogre-slam (ROS2 controller):**
+- `ogre_policy_controller/policy_controller_node.py`
+  - Added `joint_state` output mode
+  - Publishes to `/joint_command` topic
+  - Sign corrections for observations (FR, RR negated)
+  - Velocity clamping (temporary until retrain)
+
+- `ogre_policy_controller/config/policy_controller_params.yaml`
+  - Changed `output_mode: "joint_state"`
+  - Wheel joint names in physical order
+
+**Isaac Sim (Action Graph):**
+- Added "ROS2 Subscribe Joint State" node
+- Topic: `/joint_command`
+- Connected Velocity Command → Articulation Controller
+- Connected Joint Names → Articulation Controller
+
+### Testing Commands
+
+```bash
+# Terminal 1: Start policy controller
+cd ~/ros2_ws && source install/setup.bash
+ros2 run ogre_policy_controller policy_controller --ros-args \
+  --params-file ~/ros2_ws/src/ogre-slam/ogre_policy_controller/config/policy_controller_params.yaml \
+  -p use_policy:=true
+
+# Terminal 2: Send velocity commands
+export ROS_DOMAIN_ID=42
+
+# Forward (limited by clamp to ~0.3 m/s until retrain)
+ros2 topic pub /policy_cmd_vel_in geometry_msgs/msg/Twist \
+  "{linear: {x: 1.0, y: 0.0, z: 0.0}, angular: {z: 0.0}}" -r 10
+
+# Strafe left
+ros2 topic pub /policy_cmd_vel_in geometry_msgs/msg/Twist \
+  "{linear: {x: 0.0, y: 1.0, z: 0.0}, angular: {z: 0.0}}" -r 10
+
+# Rotate CCW
+ros2 topic pub /policy_cmd_vel_in geometry_msgs/msg/Twist \
+  "{linear: {x: 0.0, y: 0.0, z: 0.0}, angular: {z: 2.0}}" -r 10
+
+# Terminal 3: Monitor joint commands
+ros2 topic echo /joint_command
+```
+
+### Next Steps
+
+1. **Retrain with correct action_scale:**
+   ```bash
+   cd ~/isaac-lab/IsaacLab
+   # Update ogre_navigation_env.py: action_scale = 8.0, max_lin_vel = 0.3
+   ./isaaclab.sh -p scripts/rsl_rl/train.py --task Ogre-Navigation-Direct-v0
+   ```
+
+2. **Export and deploy new policy:**
+   ```bash
+   python scripts/rsl_rl/export_policy.py --task Ogre-Navigation-Direct-v0
+   # Copy to ogre_policy_controller/models/
+   ```
+
+3. **Remove velocity clamping** from policy_controller_node.py once policy is retrained
+
+4. **Test all motion directions** to verify policy tracks commanded velocities
+
 ## Future Enhancements
 
 ### Short Term (Next Iteration)

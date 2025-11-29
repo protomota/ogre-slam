@@ -562,3 +562,4 @@ ros2 run teleop_twist_keyboard teleop_twist_keyboard
 - **Strafe causes rotation** → Front/rear or left/right wheels swapped in joint array
 - **Rotation backwards** → Negate vtheta in all equations
 - **No movement** → Check Articulation Controller path and joint names match
+- anything ROS should go into omni-slam

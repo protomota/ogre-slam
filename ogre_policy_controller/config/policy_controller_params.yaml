@@ -6,8 +6,8 @@ ogre_policy_controller:
     # Model type: 'onnx' or 'jit'
     model_type: "onnx"
 
-    # Output mode: 'twist' (for Nav2) or 'wheel_velocities' (for direct motor control)
-    output_mode: "twist"
+    # Output mode: 'twist' (for Nav2), 'joint_state' (for Isaac Sim direct control), or 'wheel_velocities'
+    output_mode: "joint_state"
 
     # Topic configuration
     # Mode 1 (twist): subscribes to input_topic, publishes Twist to output_topic
