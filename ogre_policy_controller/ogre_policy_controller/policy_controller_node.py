@@ -61,7 +61,8 @@ class PolicyControllerNode(Node):
         self.declare_parameter('max_lin_vel', 0.5)
         self.declare_parameter('max_ang_vel', 1.0)
         self.declare_parameter('control_frequency', 30.0)
-        self.declare_parameter('wheel_joint_names', ['fl_joint', 'fr_joint', 'rl_joint', 'rr_joint'])
+        # CRITICAL: Order must match training environment's physical joint order [FR, RR, RL, FL]
+        self.declare_parameter('wheel_joint_names', ['fr_joint', 'rr_joint', 'rl_joint', 'fl_joint'])
         self.declare_parameter('output_mode', 'twist')  # 'twist' or 'wheel_velocities'
         self.declare_parameter('input_topic', '/policy_cmd_vel_in')
         self.declare_parameter('output_topic', '/cmd_vel')
@@ -232,12 +233,20 @@ class PolicyControllerNode(Node):
         Observation space (10 dimensions):
             [0-2]: Target velocity (vx, vy, vtheta)
             [3-5]: Current velocity (vx, vy, vtheta)
-            [6-9]: Wheel velocities (fl, fr, rl, rr)
+            [6-9]: Wheel velocities in PHYSICAL order [FR, RR, RL, FL]
+
+        Sign corrections applied to match training:
+            - FR (index 0) and RR (index 1) are negated
         """
+        # Apply sign corrections to wheel velocities (match training env)
+        corrected_wheel_vel = self.wheel_vel.copy()
+        corrected_wheel_vel[0] *= -1  # FR
+        corrected_wheel_vel[1] *= -1  # RR
+
         obs = np.concatenate([
             self.target_vel,
             self.current_vel,
-            self.wheel_vel
+            corrected_wheel_vel
         ]).astype(np.float32)
 
         return obs.reshape(1, -1)  # Batch dimension
@@ -339,8 +348,8 @@ class PolicyControllerNode(Node):
         if self._debug_counter % 30 == 0:
             self.get_logger().info(
                 f'Target: [{self.target_vel[0]:.3f}, {self.target_vel[1]:.3f}, {self.target_vel[2]:.3f}] | '
-                f'Raw actions: [{actions[0]:.4f}, {actions[1]:.4f}, {actions[2]:.4f}, {actions[3]:.4f}] | '
-                f'Wheel vel: [{wheel_velocities[0]:.2f}, {wheel_velocities[1]:.2f}, {wheel_velocities[2]:.2f}, {wheel_velocities[3]:.2f}]'
+                f'Obs: [{obs[0,0]:.2f},{obs[0,1]:.2f},{obs[0,2]:.2f},{obs[0,3]:.2f},{obs[0,4]:.2f},{obs[0,5]:.2f},{obs[0,6]:.2f},{obs[0,7]:.2f},{obs[0,8]:.2f},{obs[0,9]:.2f}] | '
+                f'Actions: [{actions[0]:.2f},{actions[1]:.2f},{actions[2]:.2f},{actions[3]:.2f}]'
             )
 
         # Publish based on output mode
