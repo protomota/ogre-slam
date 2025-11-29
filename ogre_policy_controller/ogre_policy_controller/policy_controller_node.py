@@ -237,13 +237,13 @@ class PolicyControllerNode(Node):
             [3-5]: Current velocity (vx, vy, vtheta)
             [6-9]: Wheel velocities in PHYSICAL order [FR, RR, RL, FL]
 
-        Sign corrections applied to match output corrections:
-            - FR (index 0) and FL (index 3) are negated (front wheels)
+        Sign corrections match training environment:
+            - RIGHT wheels (FR=index 0, RR=index 1) are negated
+            - This converts to normalized space where positive = forward for all wheels
         """
-        # Apply sign corrections to wheel velocities (match output corrections)
         corrected_wheel_vel = self.wheel_vel.copy()
-        corrected_wheel_vel[0] *= -1  # FR - front wheel
-        corrected_wheel_vel[3] *= -1  # FL - front wheel
+        corrected_wheel_vel[0] *= -1  # FR (right wheel)
+        corrected_wheel_vel[1] *= -1  # RR (right wheel)
 
         obs = np.concatenate([
             self.target_vel,
@@ -377,10 +377,10 @@ class PolicyControllerNode(Node):
         elif self.output_mode == 'joint_state':
             # Publish as JointState for direct joint control in Isaac Sim
             # Policy outputs in normalized space (positive = forward for all wheels)
-            # Negate FRONT wheels (FR index 0, FL index 3) for correct direction
+            # Negate RIGHT wheels (FR=index 0, RR=index 1) to match training _apply_action()
             corrected_velocities = wheel_velocities.copy()
-            corrected_velocities[0] *= -1  # FR - front wheel
-            corrected_velocities[3] *= -1  # FL - front wheel
+            corrected_velocities[0] *= -1  # FR (right wheel)
+            corrected_velocities[1] *= -1  # RR (right wheel)
 
             msg = JointState()
             msg.header.stamp = self.get_clock().now().to_msg()

@@ -480,7 +480,7 @@ joint_vel[:, 0] *= -1  # FR
 joint_vel[:, 1] *= -1  # RR
 ```
 
-**ROS2 Controller:** Must apply same sign corrections to observations and NOT to outputs (Isaac Sim action graph handles it).
+**ROS2 Controller:** Must apply same sign corrections to both observations AND outputs to match training environment exactly.
 
 #### 3. Twist vs JointState Output Mode
 
