@@ -469,29 +469,31 @@ The Isaac Sim robot requires an action graph to subscribe to `/cmd_vel` and cont
 3. **Break 3-Vector** (linear) → Outputs: x (vx), y (vy), z (unused)
 4. **Break 3-Vector** (angular) → Outputs: x (unused), y (unused), z (vtheta)
 5. **Math Nodes** → Compute mecanum wheel velocities (see equations below)
-6. **Multiply Nodes** → Negate ALL wheel velocities: `wheel * -1` for all 4 wheels
-7. **Make Array** → Order: `[-wheel_fl, -wheel_fr, -wheel_rl, -wheel_rr]`
+6. **Multiply Nodes** → Negate RIGHT wheel velocities only: `wheel_fr * -1`, `wheel_rr * -1`
+7. **Make Array** → Order: `[wheel_fl, -wheel_fr, wheel_rl, -wheel_rr]`
 8. **Articulation Controller** → Apply velocities to joints
 
 **Mecanum Wheel Equations (for ogre.usd):**
 ```
 L = (wheelbase + trackwidth) / 2 = (0.095 + 0.205) / 2 = 0.15
 
-# ALL wheels negated because USD joint axes are inverted (negative = forward)
-wheel_fl = -(vx - vy - vtheta * L)      # fl_joint (ALL NEGATED)
-wheel_fr = -(vx + vy + vtheta * L)      # fr_joint (ALL NEGATED)
-wheel_rl = -(vx + vy - vtheta * L)      # rl_joint (ALL NEGATED)
-wheel_rr = -(vx - vy + vtheta * L)      # rr_joint (ALL NEGATED)
+# RIGHT wheels (FR, RR) negated - they have opposite joint axis orientation
+# EMPIRICALLY TESTED: [+,+,+,+] causes CCW spin, proving asymmetric axes
+wheel_fl =  (vx - vy - vtheta * L)      # fl_joint (no negation)
+wheel_fr = -(vx + vy + vtheta * L)      # fr_joint (NEGATED - right wheel)
+wheel_rl =  (vx + vy - vtheta * L)      # rl_joint (no negation)
+wheel_rr = -(vx - vy + vtheta * L)      # rr_joint (NEGATED - right wheel)
 ```
 
 **Important Notes:**
 - **Joint names for ogre.usd:** `fl_joint`, `fr_joint`, `rl_joint`, `rr_joint`
-- Velocity array order must match joint names array order in Articulation Controller: `["fl_joint", "fr_joint", "rl_joint", "rr_joint"]`
-- **ALL wheels must be negated** because USD joint axes are inverted (negative velocity = forward motion)
+- **VERIFIED JOINT ORDER:** Isaac Lab returns joints as `[FR, RR, RL, FL]` (indices 0,1,2,3) - NOT the query order!
+- Velocity array order in Articulation Controller: `["fr_joint", "rr_joint", "rl_joint", "fl_joint"]` (actual USD order)
+- **RIGHT wheels (FR=index 0, RR=index 1) must be negated** because they have opposite joint axis orientation
 - Robot articulation path: `/World/Ogre/base_link` (or check your USD stage)
 
 **RL Policy Deployment:**
-When deploying a trained RL policy from ogre-lab, the Isaac Sim action graph must negate ALL wheel velocities. The training environment applies the same sign corrections, so the policy outputs normalized wheel velocities where `[+,+,+,+]` = forward motion. Without matching corrections in the action graph, the robot will move backward instead of forward. See the [ogre-lab README](https://github.com/protomota/ogre-lab#training-notes) for details.
+When deploying a trained RL policy from ogre-lab, the Isaac Sim action graph must negate FR and RR wheel velocities. The training environment applies the same sign corrections, so the policy outputs normalized wheel velocities where `[+,+,+,+]` = forward motion. Without matching corrections in the action graph, the robot will spin instead of going forward. See the [ogre-lab README](https://github.com/protomota/ogre-lab#training-notes) for details.
 
 ### Isaac Sim Wheel Joint Configuration
 
