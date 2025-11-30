@@ -300,6 +300,8 @@ def generate_launch_description():
     )
 
     # 16. Velocity Smoother
+    # Subscribes to /cmd_vel (from controller_server), publishes to /cmd_vel_smoothed
+    # Policy controller subscribes to /cmd_vel_smoothed
     velocity_smoother = Node(
         package='nav2_velocity_smoother',
         executable='velocity_smoother',

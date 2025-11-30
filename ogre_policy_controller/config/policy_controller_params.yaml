@@ -10,10 +10,10 @@ ogre_policy_controller:
     output_mode: "joint_state"
 
     # Topic configuration
-    # Mode 1 (twist): subscribes to input_topic, publishes Twist to output_topic
-    # Mode 2 (wheel_velocities): subscribes to input_topic, publishes Float32MultiArray to output_topic
-    input_topic: "/policy_cmd_vel_in"
-    output_topic: "/cmd_vel"
+    # joint_state mode: subscribes to /cmd_vel_smoothed (from Nav2 velocity_smoother), publishes JointState to /joint_command (to Isaac Sim)
+    # twist mode: subscribes to input_topic, publishes Twist to output_topic
+    input_topic: "/cmd_vel_smoothed"
+    output_topic: "/joint_command"
 
     # CRITICAL: action_scale is max wheel velocity in rad/s sent to articulation controller
     # Robot flips at velocities > 8 rad/s. Must match training config!

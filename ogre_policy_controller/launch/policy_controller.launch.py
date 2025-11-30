@@ -39,8 +39,8 @@ def generate_launch_description():
 
     input_topic_arg = DeclareLaunchArgument(
         'input_topic',
-        default_value='/policy_cmd_vel_in',
-        description='Input velocity command topic'
+        default_value='/cmd_vel_smoothed',
+        description='Input velocity command topic (default: /cmd_vel_smoothed from Nav2 velocity_smoother)'
     )
 
     output_topic_arg = DeclareLaunchArgument(
