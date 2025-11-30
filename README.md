@@ -992,17 +992,17 @@ ros2 launch ogre_policy_controller policy_controller.launch.py
 ```bash
 export ROS_DOMAIN_ID=42
 
-# Test forward motion (1.0 m/s - max linear velocity)
-ros2 topic pub /policy_cmd_vel_in geometry_msgs/msg/Twist \
-    "{linear: {x: 1.0, y: 0.0, z: 0.0}, angular: {x: 0.0, y: 0.0, z: 0.0}}" -r 10
+# Test forward motion (0.3 m/s - max trained linear velocity)
+ros2 topic pub /cmd_vel geometry_msgs/msg/Twist \
+    "{linear: {x: 0.3, y: 0.0, z: 0.0}, angular: {x: 0.0, y: 0.0, z: 0.0}}" -r 10
 
-# Test strafe left (1.0 m/s - max linear velocity)
-ros2 topic pub /policy_cmd_vel_in geometry_msgs/msg/Twist \
-    "{linear: {x: 0.0, y: 1.0, z: 0.0}, angular: {x: 0.0, y: 0.0, z: 0.0}}" -r 10
+# Test strafe left (0.3 m/s)
+ros2 topic pub /cmd_vel geometry_msgs/msg/Twist \
+    "{linear: {x: 0.0, y: 0.3, z: 0.0}, angular: {x: 0.0, y: 0.0, z: 0.0}}" -r 10
 
-# Test rotation (2.0 rad/s - max angular velocity)
-ros2 topic pub /policy_cmd_vel_in geometry_msgs/msg/Twist \
-    "{linear: {x: 0.0, y: 0.0, z: 0.0}, angular: {x: 0.0, y: 0.0, z: 2.0}}" -r 10
+# Test rotation (1.0 rad/s - max trained angular velocity)
+ros2 topic pub /cmd_vel geometry_msgs/msg/Twist \
+    "{linear: {x: 0.0, y: 0.0, z: 0.0}, angular: {x: 0.0, y: 0.0, z: 1.0}}" -r 10
 ```
 
 **Terminal 4: Monitor Output (Optional)**
@@ -1011,23 +1011,46 @@ export ROS_DOMAIN_ID=42
 ros2 topic echo /cmd_vel
 ```
 
-#### Integration with Nav2
+#### Running with Nav2 and RViz
 
-To use the policy with Nav2, remap Nav2's velocity output:
+The RL policy integrates seamlessly with Nav2 for autonomous navigation.
 
-```yaml
-# In your Nav2 params file
-controller_server:
-  ros__parameters:
-    cmd_vel_topic: "/policy_cmd_vel_in"
+**Terminal 1: Start Isaac Sim**
+- Open Isaac Sim
+- Load `~/ros2_ws/src/ogre-slam/usds/ogre.usd`
+- Press **Play** ▶️
+
+**Terminal 2: Launch Navigation Stack with Policy Controller**
+```bash
+conda deactivate  # Exit conda if active
+export ROS_DOMAIN_ID=42
+source ~/ros2_ws/install/setup.bash
+
+# Launch Nav2 navigation (includes policy controller)
+ros2 launch ogre_slam navigation.launch.py \
+    map:=~/ros2_ws/src/ogre-slam/maps/my_map.yaml \
+    use_policy:=true
 ```
 
-The data flow becomes:
-```
-Nav2 → /policy_cmd_vel_in → Policy Controller → /cmd_vel → Robot
+**Terminal 3: Launch RViz (on development machine)**
+```bash
+export ROS_DOMAIN_ID=42
+source ~/ros2_ws/install/setup.bash
+./scripts/launch_isaac_sim_rviz.sh
 ```
 
-See [ogre-lab README](https://github.com/protomota/ogre-lab) for training instructions.
+**In RViz:**
+1. Click **2D Pose Estimate** and set the robot's initial position on the map
+2. Click **2D Goal Pose** to send navigation goals
+3. The robot will navigate autonomously using the RL policy for wheel control
+
+**Data Flow:**
+```
+Nav2 Planner → /cmd_vel → Policy Controller → /joint_command → Isaac Sim
+```
+
+For policy training instructions, see [ogre-lab](https://github.com/protomota/ogre-lab).
+For implementation details, see [CLAUDE.md](CLAUDE.md#rl-policy-training-isaac-lab).
 
 ## Acknowledgments
 
