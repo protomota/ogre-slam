@@ -160,11 +160,12 @@ local_costmap:
       inflation_layer:
         plugin: "nav2_costmap_2d::InflationLayer"
         # cost_scaling_factor: How quickly cost drops off from obstacles
-        # Lower = costs stay high further from obstacles = more cautious
-        cost_scaling_factor: 2.5
+        # Higher = costs drop faster = more aggressive paths closer to walls
+        cost_scaling_factor: 3.0
         # inflation_radius: How far from obstacles to inflate costs
-        # robot_radius (0.20) + clearance (0.20) = 0.40m
-        inflation_radius: 0.40
+        # robot_radius (0.20) + small clearance (0.15) = 0.35m
+        # Reduced to allow planning in tighter spaces
+        inflation_radius: 0.35
       voxel_layer:
         plugin: "nav2_costmap_2d::VoxelLayer"
         enabled: True
@@ -245,11 +246,12 @@ global_costmap:
       inflation_layer:
         plugin: "nav2_costmap_2d::InflationLayer"
         # cost_scaling_factor: How quickly cost drops off from obstacles
-        # Lower = costs stay high further from obstacles = more cautious
-        cost_scaling_factor: 2.5
+        # Higher = costs drop faster = more aggressive paths closer to walls
+        cost_scaling_factor: 3.0
         # inflation_radius: How far from obstacles to inflate costs
-        # robot_radius (0.20) + clearance (0.20) = 0.40m
-        inflation_radius: 0.40
+        # robot_radius (0.20) + small clearance (0.15) = 0.35m
+        # Reduced to allow planning in tighter spaces
+        inflation_radius: 0.35
       always_send_full_costmap: True
 
 map_server:
@@ -272,7 +274,9 @@ planner_server:
     planner_plugins: ["GridBased"]
     GridBased:
       plugin: "nav2_navfn_planner/NavfnPlanner"
-      tolerance: 0.25           # Increased from 0.1 - accept goals within 25cm of requested point
+      # tolerance: How far from the requested goal NavFn will search for a valid endpoint
+      # "Failed to create plan from potential" error → goal in inflated zone → increase tolerance
+      tolerance: 0.50           # Increased from 0.25 - search 50cm around goal for valid endpoint
       use_astar: true           # A* is faster for large maps
       allow_unknown: true
 
