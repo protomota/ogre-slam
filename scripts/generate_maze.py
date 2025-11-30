@@ -99,8 +99,11 @@ def create_maze_usd(maze, cell_size=0.255, wall_height=0.385, wall_thickness=0.0
 
     wall_count = 0
 
+    # All walls are extended by wall_thickness to close gaps at intersections
+    # This adds wall_thickness/2 overlap on each end
+    extended_length = cell_size + wall_thickness
+
     # Create walls
-    # Outer boundary walls are extended by wall_thickness to close corner gaps
     for y in range(maze.height):
         for x in range(maze.width):
             cell = maze.grid[y][x]
@@ -118,16 +121,12 @@ def create_maze_usd(maze, cell_size=0.255, wall_height=0.385, wall_thickness=0.0
                 cube = UsdGeom.Cube.Define(stage, wall_name)
                 cube.CreateSizeAttr(1.0)  # Unit cube, will be scaled
 
-                # Check if this is an outer boundary wall (y=0)
-                is_outer = (y == 0)
-                wall_length = cell_size + (wall_thickness if is_outer else 0)  # Extend outer walls
-
                 # Position at north edge of cell
                 pos = Gf.Vec3d(cx + cell_size/2, cy, cz)
                 cube.AddTranslateOp().Set(pos)
 
-                # Scale: X=wall_length, Y=thickness, Z=height
-                scale = Gf.Vec3f(wall_length, wall_thickness, wall_height)
+                # Scale: X=extended_length, Y=thickness, Z=height
+                scale = Gf.Vec3f(extended_length, wall_thickness, wall_height)
                 cube.AddScaleOp().Set(scale)
 
                 # Add physics - collision and static rigid body
@@ -143,16 +142,12 @@ def create_maze_usd(maze, cell_size=0.255, wall_height=0.385, wall_thickness=0.0
                 cube = UsdGeom.Cube.Define(stage, wall_name)
                 cube.CreateSizeAttr(1.0)
 
-                # Check if this is an outer boundary wall (x=0)
-                is_outer = (x == 0)
-                wall_length = cell_size + (wall_thickness if is_outer else 0)  # Extend outer walls
-
                 # Position at west edge of cell
                 pos = Gf.Vec3d(cx, cy + cell_size/2, cz)
                 cube.AddTranslateOp().Set(pos)
 
-                # Scale: X=thickness, Y=wall_length, Z=height
-                scale = Gf.Vec3f(wall_thickness, wall_length, wall_height)
+                # Scale: X=thickness, Y=extended_length, Z=height
+                scale = Gf.Vec3f(wall_thickness, extended_length, wall_height)
                 cube.AddScaleOp().Set(scale)
 
                 # Add physics - collision and static rigid body
@@ -160,7 +155,7 @@ def create_maze_usd(maze, cell_size=0.255, wall_height=0.385, wall_thickness=0.0
                 rigid_body = UsdPhysics.RigidBodyAPI.Apply(cube.GetPrim())
                 rigid_body.CreateKinematicEnabledAttr(True)  # Static wall, doesn't move
 
-    # Add south boundary wall for last row (outer boundary - extend by wall_thickness)
+    # Add south boundary wall for last row
     y = maze.height - 1
     for x in range(maze.width):
         if maze.grid[y][x]['S']:
@@ -174,19 +169,17 @@ def create_maze_usd(maze, cell_size=0.255, wall_height=0.385, wall_thickness=0.0
             cube = UsdGeom.Cube.Define(stage, wall_name)
             cube.CreateSizeAttr(1.0)
 
-            wall_length = cell_size + wall_thickness  # Extend outer walls
-
             pos = Gf.Vec3d(cx + cell_size/2, cy, cz)
             cube.AddTranslateOp().Set(pos)
 
-            scale = Gf.Vec3f(wall_length, wall_thickness, wall_height)
+            scale = Gf.Vec3f(extended_length, wall_thickness, wall_height)
             cube.AddScaleOp().Set(scale)
 
             UsdPhysics.CollisionAPI.Apply(cube.GetPrim())
             rigid_body = UsdPhysics.RigidBodyAPI.Apply(cube.GetPrim())
             rigid_body.CreateKinematicEnabledAttr(True)
 
-    # Add east boundary wall for last column (outer boundary - extend by wall_thickness)
+    # Add east boundary wall for last column
     x = maze.width - 1
     for y in range(maze.height):
         if maze.grid[y][x]['E']:
@@ -200,12 +193,10 @@ def create_maze_usd(maze, cell_size=0.255, wall_height=0.385, wall_thickness=0.0
             cube = UsdGeom.Cube.Define(stage, wall_name)
             cube.CreateSizeAttr(1.0)
 
-            wall_length = cell_size + wall_thickness  # Extend outer walls
-
             pos = Gf.Vec3d(cx, cy + cell_size/2, cz)
             cube.AddTranslateOp().Set(pos)
 
-            scale = Gf.Vec3f(wall_thickness, wall_length, wall_height)
+            scale = Gf.Vec3f(wall_thickness, extended_length, wall_height)
             cube.AddScaleOp().Set(scale)
 
             UsdPhysics.CollisionAPI.Apply(cube.GetPrim())
