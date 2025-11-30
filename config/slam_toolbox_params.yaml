@@ -32,7 +32,7 @@ slam_toolbox:
     map_update_interval: 2.0        # Update map every 2 seconds (Jetson optimization)
     resolution: 0.05                # 5cm grid resolution (Jetson memory optimization)
     max_laser_range: 12.0           # RPLIDAR A1 max range
-    minimum_time_interval: 0.1      # Minimum time between scans (was 0.5, now 0.1 for faster updates)
+    minimum_time_interval: 0.2      # Minimum time between scans - slower = more stable
     transform_timeout: 0.2
     tf_buffer_duration: 30.0
     stack_size_to_use: 40000000     # program needs a larger stack size to serialize large maps
