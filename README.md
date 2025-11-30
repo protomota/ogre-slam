@@ -1020,19 +1020,31 @@ The RL policy integrates seamlessly with Nav2 for autonomous navigation.
 - Load `~/ros2_ws/src/ogre-slam/usds/ogre.usd`
 - Press **Play** ▶️
 
-**Terminal 2: Launch Navigation Stack with Policy Controller**
+**Terminal 2: Launch Navigation Stack**
 ```bash
 conda deactivate  # Exit conda if active
 export ROS_DOMAIN_ID=42
 source ~/ros2_ws/install/setup.bash
 
-# Launch Nav2 navigation (includes policy controller)
+# Launch Nav2 navigation for Isaac Sim
+# IMPORTANT: use_sim_time:=true is REQUIRED for Isaac Sim!
 ros2 launch ogre_slam navigation.launch.py \
     map:=~/ros2_ws/src/ogre-slam/maps/my_map.yaml \
-    use_policy:=true
+    use_sim_time:=true
 ```
 
-**Terminal 3: Launch RViz (on development machine)**
+> **CRITICAL:** The `use_sim_time:=true` flag tells all ROS2 nodes to use Isaac Sim's `/clock` topic instead of wall clock time. Without this, you'll see `TF_OLD_DATA` errors and navigation will fail.
+
+**Terminal 3: Launch Policy Controller**
+```bash
+conda deactivate
+export ROS_DOMAIN_ID=42
+source ~/ros2_ws/install/setup.bash
+
+ros2 launch ogre_policy_controller policy_controller.launch.py
+```
+
+**Terminal 4: Launch RViz (on development machine)**
 ```bash
 export ROS_DOMAIN_ID=42
 source ~/ros2_ws/install/setup.bash
@@ -1043,6 +1055,16 @@ source ~/ros2_ws/install/setup.bash
 1. Click **2D Pose Estimate** and set the robot's initial position on the map
 2. Click **2D Goal Pose** to send navigation goals
 3. The robot will navigate autonomously using the RL policy for wheel control
+
+**Launch Arguments:**
+
+| Argument | Default | Description |
+|----------|---------|-------------|
+| `map` | (required) | Path to saved map YAML file |
+| `use_sim_time` | `false` | Set `true` for Isaac Sim, `false` for real robot |
+| `use_rviz` | `true` | Launch RViz visualization |
+| `use_odometry` | `true` | Launch encoder odometry (disabled when use_sim_time=true) |
+| `use_ekf` | `true` | Use EKF sensor fusion (disabled when use_sim_time=true) |
 
 **Data Flow:**
 ```
