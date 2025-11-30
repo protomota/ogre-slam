@@ -61,28 +61,26 @@ class MazeGenerator:
 
 
 def create_maze_usd(maze, cell_size=0.255, wall_height=0.385, wall_thickness=0.02,
-                    usd_file="ogre.usd", maze_x=-3.6, maze_y=-1.3, maze_z=0.6):
+                    maze_x=-3.6, maze_y=-1.3, maze_z=0.6):
     """
-    Add maze walls to an existing USD file (or create new one).
+    Add maze walls to the currently open USD stage in Isaac Sim.
+
+    Run this from Isaac Sim Script Editor (Window → Script Editor).
 
     Args:
         maze: MazeGenerator instance
         cell_size: Size of each cell in meters (0.255m = 25.5cm)
         wall_height: Height of walls in meters (0.385m = 38.5cm)
         wall_thickness: Thickness of walls in meters (0.02m = 2cm)
-        usd_file: USD file to modify (creates if doesn't exist)
         maze_x: X position for maze Xform (meters)
         maze_y: Y position for maze Xform (meters)
         maze_z: Z position for maze Xform (meters)
     """
-    # Open existing USD stage or create new one
-    import os
-    if os.path.exists(usd_file):
-        print(f"📂 Opening existing file: {usd_file}")
-        stage = Usd.Stage.Open(usd_file)
-    else:
-        print(f"📄 Creating new file: {usd_file}")
-        stage = Usd.Stage.CreateNew(usd_file)
+    import omni.usd
+    stage = omni.usd.get_context().get_stage()
+    if stage is None:
+        print("❌ No USD stage open! Open a USD file in Isaac Sim first.")
+        return
 
     # Remove old maze if it exists
     old_maze = stage.GetPrimAtPath('/Maze')
@@ -201,23 +199,18 @@ def create_maze_usd(maze, cell_size=0.255, wall_height=0.385, wall_thickness=0.0
             rigid_body = UsdPhysics.RigidBodyAPI.Apply(cube.GetPrim())
             rigid_body.CreateKinematicEnabledAttr(True)
 
-    # Save stage
-    stage.GetRootLayer().Save()
-
     print(f"✅ Maze added successfully!")
-    print(f"   File: {usd_file}")
     print(f"   Walls: {wall_count}")
     print(f"   Maze size: {maze.width}x{maze.height} cells")
     print(f"   Physical size: {maze.width * cell_size:.2f}m x {maze.height * cell_size:.2f}m")
     print(f"   Wall dimensions: {cell_size*100:.1f}cm long x {wall_height*100:.1f}cm tall x {wall_thickness*100:.1f}cm thick")
     print(f"   Maze position: ({maze_x:.2f}m, {maze_y:.2f}m, {maze_z:.2f}m)")
     print(f"   Physics: ✅ Rigid body collision enabled")
-    print(f"\nTo view in Isaac Sim:")
-    print(f"   File → Open → {usd_file}")
+    print(f"\n💾 Remember to save your USD file (Ctrl+S)")
 
 
 def main():
-    """Generate maze and add to ogre.usd file."""
+    """Generate maze and add to currently open USD stage in Isaac Sim."""
     print("🏗️  Generating 4x4 WIDE maze for Nav2 testing...")
 
     # Generate smaller maze with wider corridors
@@ -239,13 +232,12 @@ def main():
     maze_size = 4 * 1.5  # 6.0m
     center_offset = -maze_size / 2  # -3.0m
 
-    # Add maze to ogre.usd (wide corridors for Nav2)
+    # Add maze to currently open USD stage (wide corridors for Nav2)
     create_maze_usd(
         maze,
         cell_size=1.5,        # 1.5m WIDE corridors (plenty of room!)
         wall_height=1.00,     # 100cm tall (1 meter - excellent LIDAR visibility)
         wall_thickness=0.20,  # 20cm thick (4x costmap resolution for reliable detection)
-        usd_file="/home/brad/ros2_ws/src/ogre-slam/ogre.usd",
         maze_x=center_offset, # Centered X (-3.0m)
         maze_y=center_offset, # Centered Y (-3.0m)
         maze_z=0.6            # Wall base at 60cm height
