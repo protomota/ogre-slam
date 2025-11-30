@@ -563,3 +563,169 @@ ros2 run teleop_twist_keyboard teleop_twist_keyboard
 - **Rotation backwards** → Negate vtheta in all equations
 - **No movement** → Check Articulation Controller path and joint names match
 - anything ROS should go into omni-slam
+
+## RL Policy Training (Isaac Lab)
+
+The RL policy for velocity tracking is trained using Isaac Lab and deployed via the `ogre_policy_controller` ROS2 package.
+
+### Training Environment Location
+
+```
+~/isaac-lab/IsaacLab/source/isaaclab_tasks/isaaclab_tasks/direct/ogre_navigation/
+├── ogre_navigation_env.py     # Main training environment
+├── __init__.py                # Task registration
+└── agents/
+    └── rsl_rl_ppo_cfg.py      # PPO hyperparameters
+```
+
+### Training Commands
+
+```bash
+# Activate Isaac Lab environment
+source ~/miniconda3/etc/profile.d/conda.sh
+conda activate env_isaaclab
+cd ~/isaac-lab/IsaacLab
+
+# Train (headless for speed)
+python scripts/reinforcement_learning/rsl_rl/train.py --task Isaac-Ogre-Navigation-Direct-v0 --headless
+
+# Train with visualization
+python scripts/reinforcement_learning/rsl_rl/train.py --task Isaac-Ogre-Navigation-Direct-v0
+
+# Export trained policy to ONNX
+python scripts/reinforcement_learning/rsl_rl/export_policy.py --task Isaac-Ogre-Navigation-Direct-v0 --checkpoint <path_to_model.pt>
+```
+
+### Critical Training Configuration
+
+**File:** `ogre_navigation_env.py`
+
+```python
+# Action scaling - CRITICAL
+action_scale = 8.0  # Scales policy output [-1,1] to wheel velocity [rad/s]
+
+# Target velocity ranges
+max_lin_vel = 0.3   # Max body velocity (m/s) for random targets
+max_ang_vel = 1.0   # Max angular velocity (rad/s) for random targets
+
+# Safety limit for wheel velocities
+max_wheel_vel = 8.0  # rad/s - robot flips above this
+
+# Reward configuration
+rew_scale_vel_tracking = 2.0     # Main reward for velocity tracking
+rew_scale_exceed_limit = -1.0    # Penalty ONLY for velocities > max_wheel_vel
+rew_scale_uprightness = 1.0      # Bonus for staying upright
+```
+
+### Observation Space (10 dimensions)
+
+```
+[target_vx, target_vy, target_vtheta,  # Target velocity (3)
+ current_vx, current_vy, current_vtheta,  # Current body velocity (3)
+ wheel_vel_fl, wheel_vel_fr, wheel_vel_rl, wheel_vel_rr]  # Wheel velocities (4)
+```
+
+### Action Space (4 dimensions)
+
+Policy outputs 4 values in range [-1, 1], which are scaled by `action_scale` to get wheel velocities in rad/s:
+- `[FL, FR, RL, RR]` wheel velocity targets
+
+### Lessons Learned (CRITICAL)
+
+#### 1. Never Clip After Scaling
+
+**BUG:** Clipping actions AFTER scaling destroys proportional control.
+
+```python
+# WRONG - clips scaled values back to [-1, 1], losing all range
+self.actions = self.action_scale * actions.clone()  # Scale to [-8, 8]
+clipped = torch.clamp(self.actions, -1.0, 1.0)  # Clips to [-1, 1]!
+
+# CORRECT - no clipping, policy learns appropriate outputs
+self.actions = self.action_scale * actions.clone()  # Scale to [-8, 8]
+# Apply directly to robot
+```
+
+#### 2. Energy Penalty Kills Performance
+
+**BUG:** Penalizing ALL wheel velocities causes policy to output minimal values.
+
+```python
+# WRONG - penalizes all velocities, policy learns to output ~0.1
+rew_energy = -0.01 * torch.sum(actions ** 2, dim=-1)
+# Result: wheel velocities ~1.6 rad/s when 7.5 needed for 0.3 m/s
+
+# CORRECT - only penalize velocities ABOVE the safe limit
+excess = torch.clamp(torch.abs(actions) - max_wheel_vel, min=0.0)
+rew_exceed_limit = -1.0 * torch.sum(excess ** 2, dim=-1)
+# Result: 0-8 rad/s = no penalty, >8 rad/s = strong penalty
+```
+
+#### 3. Wheel Sign Corrections
+
+Right wheels (FR, RR) have opposite joint axis orientation in the USD. Apply corrections in `_apply_action()`:
+
+```python
+corrected_actions = self.actions.clone()
+corrected_actions[:, 0] *= -1  # FR (index 0 in Isaac Lab joint order)
+corrected_actions[:, 1] *= -1  # RR (index 1 in Isaac Lab joint order)
+self.robot.set_joint_velocity_target(corrected_actions, joint_ids=self._wheel_joint_ids)
+```
+
+**Isaac Lab joint order:** `[FR, RR, RL, FL]` (indices 0,1,2,3) - NOT the query order!
+
+#### 4. Spawn Position
+
+Robot should spawn at Z = wheel_radius (0.04m) to place wheels exactly on ground:
+
+```python
+init_state=ArticulationCfg.InitialStateCfg(
+    pos=(0.0, 0.0, 0.04),  # wheel_radius = 0.04m
+)
+```
+
+### ROS2 Policy Controller
+
+**Package:** `ogre_policy_controller`
+**Node:** `policy_controller_node.py`
+
+The ROS2 controller loads the ONNX policy and runs inference at 50Hz:
+
+```yaml
+# config/policy_controller_params.yaml
+action_scale: 8.0       # Must match training
+max_lin_vel: 0.3        # Must match training
+max_ang_vel: 1.0        # Must match training
+output_mode: "joint_state"  # Publish JointState to Isaac Sim
+output_topic: "/joint_command"
+```
+
+**Deploy new policy:**
+```bash
+# Copy exported ONNX to controller
+cp ~/isaac-lab/IsaacLab/logs/rsl_rl/ogre_navigation/<run>/exported/policy.onnx \
+   ~/ros2_ws/src/ogre-slam/ogre_policy_controller/models/
+
+# Rebuild and launch
+cd ~/ros2_ws && colcon build --packages-select ogre_policy_controller
+ros2 launch ogre_policy_controller policy_controller.launch.py
+```
+
+### Debugging Policy Issues
+
+```bash
+# Check policy outputs
+ros2 topic echo /joint_command
+
+# Expected for forward motion (0.3 m/s):
+# All 4 wheel velocities ~7.5 rad/s (same sign)
+
+# Check observations being sent to policy
+# Look for log lines: "Target: [...] | Obs: [...] | Actions: [...]"
+```
+
+**Common issues:**
+- **Low velocities (1-2 rad/s):** Energy penalty too strong, or action clipping bug
+- **Velocities > 8 rad/s:** Missing exceed-limit penalty in training
+- **Wrong direction:** Sign corrections not matching between training and deployment
+- **Asymmetric wheel speeds:** Check wheel order matches between training and controller

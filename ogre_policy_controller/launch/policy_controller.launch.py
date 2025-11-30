@@ -33,8 +33,8 @@ def generate_launch_description():
 
     output_mode_arg = DeclareLaunchArgument(
         'output_mode',
-        default_value='twist',
-        description='Output mode: twist (for Nav2) or wheel_velocities (for direct motor control)'
+        default_value='joint_state',
+        description='Output mode: twist (for Nav2), joint_state (for Isaac Sim), or wheel_velocities (for direct motor control)'
     )
 
     input_topic_arg = DeclareLaunchArgument(
@@ -45,8 +45,8 @@ def generate_launch_description():
 
     output_topic_arg = DeclareLaunchArgument(
         'output_topic',
-        default_value='/cmd_vel',
-        description='Output topic (Twist or Float32MultiArray depending on mode)'
+        default_value='/joint_command',
+        description='Output topic (Twist, JointState, or Float32MultiArray depending on mode)'
     )
 
     params_file_arg = DeclareLaunchArgument(

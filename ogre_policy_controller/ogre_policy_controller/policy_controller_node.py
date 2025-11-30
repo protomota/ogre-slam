@@ -353,10 +353,12 @@ class PolicyControllerNode(Node):
         actions = self._run_policy(obs)
 
         # Scale actions to wheel velocities (rad/s)
+        # Policy outputs raw values, multiply by action_scale to get rad/s
         wheel_velocities = actions * self.action_scale
-        # Clamp to prevent aggressive velocities that cause flipping
-        max_wheel_vel = 8.0  # rad/s - safe limit for stability
-        wheel_velocities = np.clip(wheel_velocities, -max_wheel_vel, max_wheel_vel)
+
+        # Safety clamp: Robot flips at wheel velocities > 8 rad/s
+        max_safe_wheel_vel = 8.0
+        wheel_velocities = np.clip(wheel_velocities, -max_safe_wheel_vel, max_safe_wheel_vel)
 
         # Debug logging (every 30 iterations = 1 second)
         if not hasattr(self, '_debug_counter'):
