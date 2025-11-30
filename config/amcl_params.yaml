@@ -18,8 +18,8 @@ amcl:
 
     # Particle filter parameters
     # Higher particle count = better accuracy but more CPU
-    min_particles: 1000       # Increased from 500 for uniform environments
-    max_particles: 5000       # Increased from 2000 for better tracking
+    min_particles: 500        # Back to 500 to reduce CPU load
+    max_particles: 2000       # Back to 2000 to reduce CPU load
 
     # Recovery behavior - more aggressive recovery when lost
     recovery_alpha_slow: 0.0   # Disabled - always allow recovery
