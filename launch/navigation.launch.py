@@ -29,19 +29,17 @@ from launch_ros.substitutions import FindPackageShare
 
 
 def generate_localization_nodes(context, *args, **kwargs):
-    """Generate map server and slam_toolbox localization nodes with expanded map path."""
+    """Generate map server and AMCL localization nodes with expanded map path."""
     map_path = LaunchConfiguration('map').perform(context)
+    use_sim_time_str = LaunchConfiguration('use_sim_time').perform(context)
+    use_sim_time = use_sim_time_str.lower() == 'true'
+
     expanded_path = os.path.expanduser(map_path)
     expanded_path = os.path.expandvars(expanded_path)
 
-    # Extract map file name without extension for slam_toolbox
-    # e.g., /home/jetson/ros2_ws/src/ogre-slam/maps/my_map.yaml -> my_map
-    map_file_name = os.path.splitext(os.path.basename(expanded_path))[0]
-    map_dir = os.path.dirname(expanded_path)
-
     # Get config directory
     ogre_slam_dir = get_package_share_directory('ogre_slam')
-    slam_params_file = os.path.join(ogre_slam_dir, 'config', 'slam_toolbox_params.yaml')
+    amcl_params_file = os.path.join(ogre_slam_dir, 'config', 'amcl_params.yaml')
 
     map_server_node = Node(
         package='nav2_map_server',
@@ -49,23 +47,19 @@ def generate_localization_nodes(context, *args, **kwargs):
         name='map_server',
         output='screen',
         parameters=[{
-            'use_sim_time': False,
+            'use_sim_time': use_sim_time,
             'yaml_filename': expanded_path
         }],
         emulate_tty=True
     )
 
     # AMCL for localization (publishes map->odom transform)
-    # Get config directory
-    ogre_slam_dir = get_package_share_directory('ogre_slam')
-    amcl_params_file = os.path.join(ogre_slam_dir, 'config', 'amcl_params.yaml')
-
     amcl_node = Node(
         package='nav2_amcl',
         executable='amcl',
         name='amcl',
         output='screen',
-        parameters=[amcl_params_file],
+        parameters=[amcl_params_file, {'use_sim_time': use_sim_time}],
         emulate_tty=True
     )
 
@@ -227,7 +221,7 @@ def generate_launch_description():
         name='lifecycle_manager_navigation',
         output='screen',
         parameters=[{
-            'use_sim_time': False,
+            'use_sim_time': use_sim_time,
             'autostart': True,
             'node_names': [
                 'controller_server',
@@ -248,7 +242,7 @@ def generate_launch_description():
         name='lifecycle_manager_localization',
         output='screen',
         parameters=[{
-            'use_sim_time': False,
+            'use_sim_time': use_sim_time,
             'autostart': True,
             'node_names': ['map_server', 'amcl']
         }],
