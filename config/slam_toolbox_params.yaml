@@ -42,35 +42,35 @@ slam_toolbox:
     use_scan_barycenter: true
     minimum_travel_distance: 0.0    # Disabled - rely purely on time-based scan processing
     minimum_travel_heading: 0.0     # Disabled - rely purely on time-based scan processing
-    scan_buffer_size: 10
-    scan_buffer_maximum_scan_distance: 10.0
-    link_match_minimum_response_fine: 0.1
-    link_scan_maximum_distance: 1.5
-    loop_search_maximum_distance: 3.0
+    scan_buffer_size: 20            # Increased from 10 - keep more scans for matching
+    scan_buffer_maximum_scan_distance: 15.0  # Increased - allow matching against older scans
+    link_match_minimum_response_fine: 0.05   # Lowered from 0.1 - accept weaker matches to avoid losing track
+    link_scan_maximum_distance: 3.0          # Increased from 1.5 - allow larger jumps between scans
+    loop_search_maximum_distance: 6.0        # Increased from 3.0 - search wider for loop closure
     do_loop_closing: true
-    loop_match_minimum_chain_size: 10
-    loop_match_maximum_variance_coarse: 3.0
-    loop_match_minimum_response_coarse: 0.35
-    loop_match_minimum_response_fine: 0.45
+    loop_match_minimum_chain_size: 6         # Reduced from 10 - close loops sooner
+    loop_match_maximum_variance_coarse: 5.0  # Increased from 3.0 - more tolerant
+    loop_match_minimum_response_coarse: 0.25 # Lowered from 0.35 - accept weaker loop matches
+    loop_match_minimum_response_fine: 0.35   # Lowered from 0.45 - accept weaker loop matches
 
     # Correlation Parameters - Larger search space for noisy odometry
-    correlation_search_space_dimension: 1.5   # Increased from 0.5 - search wider area
+    correlation_search_space_dimension: 2.0   # Increased from 1.5 - search even wider
     correlation_search_space_resolution: 0.01
     correlation_search_space_smear_deviation: 0.1  # Max allowed value (0.005-0.1)
 
     # Correlation Parameters - Loop Closure Parameters
-    loop_search_space_dimension: 8.0
+    loop_search_space_dimension: 12.0  # Increased from 8.0 - wider loop search
     loop_search_space_resolution: 0.05
-    loop_search_space_smear_deviation: 0.03
+    loop_search_space_smear_deviation: 0.05  # Increased from 0.03
 
     # Scan Matcher Parameters
-    # Lower penalties for scan-matching mode (static odom transform)
-    distance_variance_penalty: 0.5   # Lower - rely more on scan matching
-    angle_variance_penalty: 1.0      # Lower - rely more on scan matching
+    # Lower penalties = trust scan matching more than odometry
+    distance_variance_penalty: 0.3   # Lowered from 0.5 - trust scan matching more
+    angle_variance_penalty: 0.5      # Lowered from 1.0 - trust scan matching more
 
-    fine_search_angle_offset: 0.00349
-    coarse_search_angle_offset: 0.349
+    fine_search_angle_offset: 0.00524    # Increased from 0.00349 (~0.3°) - wider fine search
+    coarse_search_angle_offset: 0.524    # Increased from 0.349 (~30°) - wider coarse search
     coarse_angle_resolution: 0.0349
-    minimum_angle_penalty: 0.9
-    minimum_distance_penalty: 0.5
+    minimum_angle_penalty: 0.8       # Lowered from 0.9 - more tolerant of angle differences
+    minimum_distance_penalty: 0.4    # Lowered from 0.5 - more tolerant of distance differences
     use_response_expansion: true
