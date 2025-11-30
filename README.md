@@ -407,7 +407,7 @@ ros2 launch ogre_slam navigation.launch.py \
 
 ```bash
 cd ~/ros2_ws && source install/setup.bash
-ros2 launch ogre_slam navigation.launch.py map:=~/ros2_ws/src/ogre-slam/maps/my_map.yaml
+ros2 launch ogre_slam navigation.launch.py map:=~/ros2_ws/src/ogre-slam/maps/isaac_sim_map.yaml
 ```
 
 This launches:
@@ -1029,7 +1029,7 @@ source ~/ros2_ws/install/setup.bash
 # Launch Nav2 navigation for Isaac Sim
 # IMPORTANT: use_sim_time:=true is REQUIRED for Isaac Sim!
 ros2 launch ogre_slam navigation.launch.py \
-    map:=~/ros2_ws/src/ogre-slam/maps/my_map.yaml \
+    map:=~/ros2_ws/src/ogre-slam/maps/isaac_sim_map.yaml \
     use_sim_time:=true
 ```
 
