@@ -18,16 +18,16 @@ amcl:
 
     # Particle filter parameters
     # Higher particle count = better accuracy but more CPU
-    min_particles: 500
-    max_particles: 2000
+    min_particles: 1000       # Increased from 500 for uniform environments
+    max_particles: 5000       # Increased from 2000 for better tracking
 
-    # Recovery behavior
-    recovery_alpha_slow: 0.001
-    recovery_alpha_fast: 0.1
+    # Recovery behavior - more aggressive recovery when lost
+    recovery_alpha_slow: 0.0   # Disabled - always allow recovery
+    recovery_alpha_fast: 0.5   # Faster recovery when lost
 
-    # Update rates
-    update_min_d: 0.1  # Minimum distance (m) to update filter
-    update_min_a: 0.2  # Minimum angle (rad) to update filter
+    # Update rates - more frequent updates
+    update_min_d: 0.05  # Reduced from 0.1 - update more often
+    update_min_a: 0.1   # Reduced from 0.2 - update on smaller rotations
     resample_interval: 1  # Resample every update
 
     # Laser model parameters (RPLIDAR A1)
