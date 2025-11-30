@@ -271,8 +271,8 @@ planner_server:
     planner_plugins: ["GridBased"]
     GridBased:
       plugin: "nav2_navfn_planner/NavfnPlanner"
-      tolerance: 0.1
-      use_astar: false  # Dijkstra (guaranteed optimal)
+      tolerance: 0.25           # Increased from 0.1 - accept goals within 25cm of requested point
+      use_astar: true           # A* is faster for large maps
       allow_unknown: true
 
 smoother_server:
