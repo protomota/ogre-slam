@@ -48,10 +48,10 @@ slam_toolbox:
     link_scan_maximum_distance: 3.0          # Increased from 1.5 - allow larger jumps between scans
     loop_search_maximum_distance: 6.0        # Increased from 3.0 - search wider for loop closure
     do_loop_closing: true
-    loop_match_minimum_chain_size: 6         # Reduced from 10 - close loops sooner
-    loop_match_maximum_variance_coarse: 5.0  # Increased from 3.0 - more tolerant
-    loop_match_minimum_response_coarse: 0.25 # Lowered from 0.35 - accept weaker loop matches
-    loop_match_minimum_response_fine: 0.35   # Lowered from 0.45 - accept weaker loop matches
+    loop_match_minimum_chain_size: 10        # Back to 10 - require more confidence for loop closure
+    loop_match_maximum_variance_coarse: 3.0  # Back to 3.0 - stricter matching
+    loop_match_minimum_response_coarse: 0.45 # Raised - require stronger loop matches to avoid false positives
+    loop_match_minimum_response_fine: 0.55   # Raised - require stronger loop matches
 
     # Correlation Parameters - Larger search space for noisy odometry
     correlation_search_space_dimension: 2.0   # Increased from 1.5 - search even wider
