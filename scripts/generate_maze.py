@@ -257,9 +257,7 @@ def main():
     print("   - Total size: 6.0m × 6.0m")
     print("   - Clearance: 1274mm (5.6x robot diagonal!)")
     print("   - Center: 4 cells cleared for large starting area")
-    print("\n⚠️  Note: This modifies ogre.usd - make a backup first!")
     print("💡 Tip: Wide corridors allow Nav2 to drive fast and turn easily")
-    print("💡 Perfect for testing autonomous navigation at high speeds")
 
 
 if __name__ == "__main__":

@@ -1,18 +1,10 @@
 #!/bin/bash
 # Run maze generator using Isaac Sim's Python
-# This will add a maze to ogre.usd
+# This will add a maze to the existing ogre.usd
 
 set -e  # Exit on error
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-OGRE_USD="$SCRIPT_DIR/../ogre.usd"
-BACKUP_USD="$SCRIPT_DIR/../ogre_backup.usd"
-
-# Create backup if it doesn't exist
-if [ ! -f "$BACKUP_USD" ]; then
-    echo "💾 Creating backup: ogre_backup.usd"
-    cp "$OGRE_USD" "$BACKUP_USD"
-fi
 
 # Find Isaac Sim installation
 ISAAC_SIM_PATH=$(find ~/.local/share/ov/pkg -maxdepth 1 -type d -name "isaac-sim-*" | sort -V | tail -1)
@@ -36,4 +28,3 @@ echo ""
 
 echo ""
 echo "✨ Done! Reload ogre.usd in Isaac Sim to see the maze."
-echo "   To restore backup: cp ogre_backup.usd ogre.usd"
