@@ -110,27 +110,34 @@ controller_server:
       vx_samples: 20
       vy_samples: 10  # Mecanum can strafe
       vtheta_samples: 20
-      sim_time: 0.5  # Very short for aggressive driving
-      linear_granularity: 0.1  # Coarser for faster computation
-      angular_granularity: 0.05
-      transform_tolerance: 0.5  # More lenient
-      xy_goal_tolerance: 0.25  # Wider goal tolerance
-      trans_stopped_velocity: 0.1  # Lower threshold
+      # sim_time: How far ahead (seconds) to simulate trajectories
+      # Balance: too short = cuts corners, too long = gets stuck on distant obstacles
+      sim_time: 1.2
+      linear_granularity: 0.05
+      angular_granularity: 0.025
+      transform_tolerance: 0.5
+      xy_goal_tolerance: 0.15
+      trans_stopped_velocity: 0.1
       short_circuit_trajectory_evaluation: True
       stateful: True
 
       # Trajectory critics (scoring functions)
+      # Higher scale = more weight on that criterion
       critics: ["RotateToGoal", "Oscillation", "BaseObstacle", "GoalAlign", "PathAlign", "PathDist", "GoalDist"]
-      # BaseObstacle: Higher = more obstacle avoidance, prevents cutting corners
+      # BaseObstacle: Avoid obstacles (reduced - was too aggressive)
       BaseObstacle.scale: 0.02
-      PathAlign.scale: 32.0  # Follow the planned path more strictly
-      PathAlign.forward_point_distance: 0.3
-      GoalAlign.scale: 24.0
-      GoalAlign.forward_point_distance: 0.3
-      PathDist.scale: 32.0  # Stay close to the path
+      # PathAlign: Align robot heading with path direction
+      PathAlign.scale: 48.0
+      PathAlign.forward_point_distance: 0.5
+      # GoalAlign: Align heading toward goal
+      GoalAlign.scale: 20.0
+      GoalAlign.forward_point_distance: 0.5
+      # PathDist: Stay close to the global path
+      PathDist.scale: 48.0
+      # GoalDist: Move toward goal
       GoalDist.scale: 24.0
       RotateToGoal.scale: 32.0
-      RotateToGoal.slowing_factor: 5.0  # Slow down when rotating to goal
+      RotateToGoal.slowing_factor: 5.0
       RotateToGoal.lookahead_time: -1.0
 
 local_costmap:
@@ -153,10 +160,10 @@ local_costmap:
         plugin: "nav2_costmap_2d::InflationLayer"
         # cost_scaling_factor: How quickly cost drops off from obstacles
         # Lower = costs stay high further from obstacles = more cautious
-        cost_scaling_factor: 3.0
+        cost_scaling_factor: 2.5
         # inflation_radius: How far from obstacles to inflate costs
-        # Should be at least robot_radius + desired clearance (0.20 + 0.25 = 0.45m)
-        inflation_radius: 0.45
+        # robot_radius (0.20) + clearance (0.20) = 0.40m
+        inflation_radius: 0.40
       voxel_layer:
         plugin: "nav2_costmap_2d::VoxelLayer"
         enabled: True
@@ -238,10 +245,10 @@ global_costmap:
         plugin: "nav2_costmap_2d::InflationLayer"
         # cost_scaling_factor: How quickly cost drops off from obstacles
         # Lower = costs stay high further from obstacles = more cautious
-        cost_scaling_factor: 3.0
+        cost_scaling_factor: 2.5
         # inflation_radius: How far from obstacles to inflate costs
-        # Should be at least robot_radius + desired clearance (0.20 + 0.25 = 0.45m)
-        inflation_radius: 0.45
+        # robot_radius (0.20) + clearance (0.20) = 0.40m
+        inflation_radius: 0.40
       always_send_full_costmap: True
 
 map_server:

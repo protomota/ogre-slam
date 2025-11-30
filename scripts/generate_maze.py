@@ -244,7 +244,7 @@ def main():
         maze,
         cell_size=1.5,        # 1.5m WIDE corridors (plenty of room!)
         wall_height=1.00,     # 100cm tall (1 meter - excellent LIDAR visibility)
-        wall_thickness=0.02,  # 2cm thick
+        wall_thickness=0.20,  # 20cm thick (4x costmap resolution for reliable detection)
         usd_file="/home/brad/ros2_ws/src/ogre-slam/ogre.usd",
         maze_x=center_offset, # Centered X (-3.0m)
         maze_y=center_offset, # Centered Y (-3.0m)
