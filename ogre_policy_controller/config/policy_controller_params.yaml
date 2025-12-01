@@ -16,12 +16,13 @@ ogre_policy_controller:
     output_topic: "/joint_command"
 
     # CRITICAL: action_scale is max wheel velocity in rad/s sent to articulation controller
-    # Robot flips at velocities > 8 rad/s. Must match training config!
-    # Policy trained with action_scale=8.0, max_lin_vel=0.5, max_ang_vel=2.0
+    # Must match training config exactly!
+    # Deployed policy trained with action_scale=8.0, max_lin_vel=0.5, max_ang_vel=2.0
+    # (from training run 2025-11-30_11-39-07)
     action_scale: 8.0
 
     # Velocity limits - MUST match training config!
-    # Policy trained with these exact values
+    # Policy trained with these exact values (for normalization)
     max_lin_vel: 0.5
     max_ang_vel: 2.0
 
@@ -33,10 +34,10 @@ ogre_policy_controller:
     wheelbase: 0.095       # 95mm front-rear
     track_width: 0.205     # 205mm left-right
 
-    # Wheel joint names in PHYSICAL order (matches training): [FR, RR, RL, FL]
-    # This is the order returned by Isaac Lab's find_joints(), NOT the query order!
+    # Wheel joint names must match TRAINING order: [FL, FR, RL, RR]
+    # Policy outputs actions in this order, so we send to joints in this order
     wheel_joint_names:
-      - "fr_joint"
-      - "rr_joint"
-      - "rl_joint"
       - "fl_joint"
+      - "fr_joint"
+      - "rl_joint"
+      - "rr_joint"

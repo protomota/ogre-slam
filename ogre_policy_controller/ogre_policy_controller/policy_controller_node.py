@@ -235,15 +235,15 @@ class PolicyControllerNode(Node):
         Observation space (10 dimensions):
             [0-2]: Target velocity (vx, vy, vtheta)
             [3-5]: Current velocity (vx, vy, vtheta)
-            [6-9]: Wheel velocities in PHYSICAL order [FR, RR, RL, FL]
+            [6-9]: Wheel velocities in TRAINING order [FL, FR, RL, RR]
 
         Sign corrections match training environment:
-            - RIGHT wheels (FR=index 0, RR=index 1) are negated
+            - FRONT wheels (FL=index 0, FR=index 1) are negated
             - This converts to normalized space where positive = forward for all wheels
         """
         corrected_wheel_vel = self.wheel_vel.copy()
-        corrected_wheel_vel[0] *= -1  # FR (right wheel)
-        corrected_wheel_vel[1] *= -1  # RR (right wheel)
+        corrected_wheel_vel[0] *= -1  # FL (front wheel)
+        corrected_wheel_vel[1] *= -1  # FR (front wheel)
 
         obs = np.concatenate([
             self.target_vel,
@@ -378,15 +378,16 @@ class PolicyControllerNode(Node):
             self.output_pub.publish(twist_msg)
         elif self.output_mode == 'joint_state':
             # Publish as JointState for direct joint control in Isaac Sim
-            # Policy outputs in normalized space (positive = forward for all wheels)
-            # Negate RIGHT wheels (FR=index 0, RR=index 1) to match training _apply_action()
+            # Policy outputs in training order: [FL, FR, RL, RR] = indices [0, 1, 2, 3]
+            # Training _apply_action() negates FRONT wheels (FL, FR) to match joint axis orientation
+            # We must apply the same correction here
             corrected_velocities = wheel_velocities.copy()
-            corrected_velocities[0] *= -1  # FR (right wheel)
-            corrected_velocities[1] *= -1  # RR (right wheel)
+            corrected_velocities[0] *= -1  # FL (front wheel)
+            corrected_velocities[1] *= -1  # FR (front wheel)
 
             msg = JointState()
             msg.header.stamp = self.get_clock().now().to_msg()
-            msg.name = list(self.wheel_joint_names)  # [fr_joint, rr_joint, rl_joint, fl_joint]
+            msg.name = list(self.wheel_joint_names)  # [fl_joint, fr_joint, rl_joint, rr_joint]
             msg.velocity = corrected_velocities.tolist()
             msg.position = []  # Not used
             msg.effort = []  # Not used
