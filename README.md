@@ -230,13 +230,26 @@ ros2 launch ogre_slam mapping.launch.py \
 - `use_teleop:=false` - Don't launch ogre_teleop (not needed)
 - `use_rviz:=true` - Show visualization
 
-**Step 3: Drive the robot**
+**Step 3: Launch the Policy Controller**
+
+The policy controller converts Twist commands to wheel joint velocities for Isaac Sim:
+```bash
+# In another terminal
+conda deactivate  # Exit conda if active
+export ROS_DOMAIN_ID=42
+source ~/ros2_ws/install/setup.bash
+ros2 launch ogre_policy_controller policy_controller.launch.py
+```
+
+**Step 4: Drive the robot**
 
 In another terminal:
 ```bash
 export ROS_DOMAIN_ID=42
-ros2 run teleop_twist_keyboard teleop_twist_keyboard
+ros2 run teleop_twist_keyboard teleop_twist_keyboard --ros-args -r /cmd_vel:=/cmd_vel_smoothed
 ```
+
+> **Note:** The `--ros-args -r /cmd_vel:=/cmd_vel_smoothed` remaps the teleop output to the topic the policy controller subscribes to.
 
 **Keyboard controls:**
 - **i** - Forward
@@ -248,7 +261,7 @@ ros2 run teleop_twist_keyboard teleop_twist_keyboard
 
 Drive slowly around the Isaac Sim environment and watch the map build in RViz!
 
-**Step 4: Save the map**
+**Step 5: Save the map**
 
 When mapping is complete, in another terminal:
 ```bash
@@ -264,7 +277,7 @@ Preview the saved map:
 eog ~/ros2_ws/src/ogre-slam/maps/isaac_sim_map.pgm
 ```
 
-**Step 5: Stop the system**
+**Step 6: Stop the system**
 ```bash
 # Press Ctrl+C in both terminals
 ```
