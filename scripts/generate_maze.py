@@ -230,30 +230,33 @@ def main():
 
     # Calculate centered position
     # Robot: 205mm wide × 95mm long (diagonal: 226mm)
-    # Cell size: 1.5m = 1500mm (HUGE clearance for fast navigation!)
-    # 4 cells × 1.5m = 6.0m total maze size
-    # To center at origin: offset by -half_size = -3.0m
-    maze_size = 4 * 1.5  # 6.0m
-    center_offset = -maze_size / 2  # -3.0m
+    # Cell size: 2.0m = 2000mm (HUGE clearance for navigation with 0.6m inflation)
+    # 4 cells × 2.0m = 8.0m total maze size
+    # To center at origin: offset by -half_size = -4.0m
+    cell_size = 2.0  # 2.0m wide corridors
+    maze_size = 4 * cell_size  # 8.0m
+    center_offset = -maze_size / 2  # -4.0m
 
-    # Add maze to currently open USD stage (wide corridors for Nav2)
+    # Add maze to currently open USD stage (extra wide corridors for Nav2)
     create_maze_usd(
         maze,
-        cell_size=1.5,        # 1.5m WIDE corridors (plenty of room!)
+        cell_size=cell_size,  # 2.0m EXTRA WIDE corridors
         wall_height=1.00,     # 100cm tall (1 meter - excellent LIDAR visibility)
         wall_thickness=0.20,  # 20cm thick (4x costmap resolution for reliable detection)
-        maze_x=center_offset, # Centered X (-3.0m)
-        maze_y=center_offset, # Centered Y (-3.0m)
+        maze_x=center_offset, # Centered X (-4.0m)
+        maze_y=center_offset, # Centered Y (-4.0m)
         maze_z=0.6            # Wall base at 60cm height
     )
 
-    print("\n📝 Wide Maze Configuration:")
-    print("   - Maze size: 4×4 cells (smaller but WIDER)")
-    print("   - Cell size: 1.5m × 1.5m (2.5x wider than before!)")
-    print("   - Total size: 6.0m × 6.0m")
-    print("   - Clearance: 1274mm (5.6x robot diagonal!)")
+    # With 2.0m corridors and 0.6m inflation on each side:
+    # Free planning space = 2.0 - 0.6 - 0.6 = 0.8m (plenty for 0.2m robot)
+    print("\n📝 Extra Wide Maze Configuration:")
+    print("   - Maze size: 4×4 cells")
+    print("   - Cell size: 2.0m × 2.0m (extra wide for safe navigation)")
+    print("   - Total size: 8.0m × 8.0m")
+    print("   - Free planning space: 0.8m (with 0.6m inflation)")
     print("   - Center: 4 cells cleared for large starting area")
-    print("💡 Tip: Wide corridors allow Nav2 to drive fast and turn easily")
+    print("💡 Tip: Wide corridors prevent corner collisions with high inflation radius")
 
 
 if __name__ == "__main__":
