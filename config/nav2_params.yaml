@@ -160,12 +160,12 @@ local_costmap:
       inflation_layer:
         plugin: "nav2_costmap_2d::InflationLayer"
         # cost_scaling_factor: How quickly cost drops off from obstacles
-        # Higher = costs drop faster = more aggressive paths closer to walls
-        cost_scaling_factor: 3.0
+        # Lower = costs stay high further = more cautious near walls
+        cost_scaling_factor: 2.0
         # inflation_radius: How far from obstacles to inflate costs
-        # robot_radius (0.20) + small clearance (0.15) = 0.35m
-        # Reduced to allow planning in tighter spaces
-        inflation_radius: 0.35
+        # robot_radius (0.20) + clearance (0.30) = 0.50m
+        # Increased to prevent corner clipping
+        inflation_radius: 0.50
       voxel_layer:
         plugin: "nav2_costmap_2d::VoxelLayer"
         enabled: True
@@ -246,12 +246,12 @@ global_costmap:
       inflation_layer:
         plugin: "nav2_costmap_2d::InflationLayer"
         # cost_scaling_factor: How quickly cost drops off from obstacles
-        # Higher = costs drop faster = more aggressive paths closer to walls
-        cost_scaling_factor: 3.0
+        # Lower = costs stay high further = more cautious near walls
+        cost_scaling_factor: 2.0
         # inflation_radius: How far from obstacles to inflate costs
-        # robot_radius (0.20) + small clearance (0.15) = 0.35m
-        # Reduced to allow planning in tighter spaces
-        inflation_radius: 0.35
+        # robot_radius (0.20) + clearance (0.30) = 0.50m
+        # Increased to prevent corner clipping
+        inflation_radius: 0.50
       always_send_full_costmap: True
 
 map_server:
