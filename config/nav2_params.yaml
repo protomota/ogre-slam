@@ -125,16 +125,18 @@ controller_server:
       # Trajectory critics (scoring functions)
       # Higher scale = more weight on that criterion
       critics: ["RotateToGoal", "Oscillation", "BaseObstacle", "GoalAlign", "PathAlign", "PathDist", "GoalDist"]
-      # BaseObstacle: Avoid obstacles (reduced - was too aggressive)
-      BaseObstacle.scale: 0.02
+      # BaseObstacle: Avoid obstacles - CRITICAL for not hitting walls
+      # Must be high enough to reject trajectories that go near obstacles
+      BaseObstacle.scale: 0.5
+      BaseObstacle.sum_scores: false
       # PathAlign: Align robot heading with path direction
-      PathAlign.scale: 48.0
+      PathAlign.scale: 32.0
       PathAlign.forward_point_distance: 0.5
       # GoalAlign: Align heading toward goal
       GoalAlign.scale: 20.0
       GoalAlign.forward_point_distance: 0.5
       # PathDist: Stay close to the global path
-      PathDist.scale: 48.0
+      PathDist.scale: 32.0
       # GoalDist: Move toward goal
       GoalDist.scale: 24.0
       RotateToGoal.scale: 32.0
