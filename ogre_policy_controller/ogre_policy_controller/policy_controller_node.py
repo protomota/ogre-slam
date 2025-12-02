@@ -58,8 +58,8 @@ class PolicyControllerNode(Node):
         self.declare_parameter('model_path', '')
         self.declare_parameter('model_type', 'onnx')  # 'onnx' or 'jit'
         self.declare_parameter('action_scale', 8.0)
-        self.declare_parameter('max_lin_vel', 8.0)
-        self.declare_parameter('max_ang_vel', 6.0)
+        self.declare_parameter('max_lin_vel', 0.5)
+        self.declare_parameter('max_ang_vel', 2.0)
         self.declare_parameter('control_frequency', 30.0)
         # CRITICAL: Order must match training environment's physical joint order [FR, RR, RL, FL]
         self.declare_parameter('wheel_joint_names', ['fr_joint', 'rr_joint', 'rl_joint', 'fl_joint'])
