@@ -57,9 +57,9 @@ class PolicyControllerNode(Node):
         self.declare_parameter('use_policy', False)  # If False, pass through Twist directly
         self.declare_parameter('model_path', '')
         self.declare_parameter('model_type', 'onnx')  # 'onnx' or 'jit'
-        self.declare_parameter('action_scale', 10.0)
-        self.declare_parameter('max_lin_vel', 0.5)
-        self.declare_parameter('max_ang_vel', 1.0)
+        self.declare_parameter('action_scale', 8.0)
+        self.declare_parameter('max_lin_vel', 8.0)
+        self.declare_parameter('max_ang_vel', 6.0)
         self.declare_parameter('control_frequency', 30.0)
         # CRITICAL: Order must match training environment's physical joint order [FR, RR, RL, FL]
         self.declare_parameter('wheel_joint_names', ['fr_joint', 'rr_joint', 'rl_joint', 'fl_joint'])
@@ -378,12 +378,15 @@ class PolicyControllerNode(Node):
             self.output_pub.publish(twist_msg)
         elif self.output_mode == 'joint_state':
             # Publish as JointState for direct joint control in Isaac Sim
-            # Policy outputs in training order: [FL, FR, RL, RR] = indices [0, 1, 2, 3]
-            # Training _apply_action() negates FRONT wheels (FL, FR) to match joint axis orientation
-            # We must apply the same correction here
+            #
+            # Policy outputs wheel velocities in order: [FL, FR, RL, RR] = indices [0, 1, 2, 3]
+            # We send to joints named: [fl_joint, fr_joint, rl_joint, rr_joint] in same order
+            #
+            # NO sign corrections - the Isaac Sim action graph should handle joint orientation
+            # If robot moves wrong direction, the action graph multiply nodes need adjustment
             corrected_velocities = wheel_velocities.copy()
-            corrected_velocities[0] *= -1  # FL (front wheel)
-            corrected_velocities[1] *= -1  # FR (front wheel)
+            # corrected_velocities[1] *= -1  # FR (right wheel) - DISABLED for testing
+            # corrected_velocities[3] *= -1  # RR (right wheel) - DISABLED for testing
 
             msg = JointState()
             msg.header.stamp = self.get_clock().now().to_msg()
