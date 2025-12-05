@@ -11,28 +11,38 @@ Run autonomous navigation in Isaac Sim with the trained RL policy.
 ## Step 2: Launch Navigation Stack
 
 ```bash
-# Terminal 1: Navigation + Policy Controller
+conda deactivate  # Exit conda if active
 export ROS_DOMAIN_ID=42
 source ~/ros2_ws/install/setup.bash
-ros2 launch ogre_slam navigation.launch.py map:=~/ros2_ws/src/ogre-slam/maps/wide_maze.yaml use_rviz:=false
+
+# CRITICAL: use_sim_time:=true is REQUIRED for Isaac Sim!
+ros2 launch ogre_slam navigation.launch.py \
+    map:=~/ros2_ws/src/ogre-slam/maps/isaac_sim_map.yaml \
+    use_sim_time:=true
 ```
 
+> **CRITICAL:** The `use_sim_time:=true` flag tells all ROS2 nodes to use Isaac Sim's `/clock` topic instead of wall clock time. Without this, you'll see TF_OLD_DATA errors and navigation will fail.
+
+## Step 3: Launch Policy Controller
+
 ```bash
-# Terminal 2: Policy Controller
+conda deactivate
 export ROS_DOMAIN_ID=42
 source ~/ros2_ws/install/setup.bash
-ros2 launch ogre_policy_controller policy_controller.launch.py use_policy:=true
+
+ros2 launch ogre_policy_controller policy_controller.launch.py
 ```
 
+## Step 4: Launch RViz
+
 ```bash
-# Terminal 3: RViz
 export ROS_DOMAIN_ID=42
 source ~/ros2_ws/install/setup.bash
 cd ~/ros2_ws/src/ogre-slam
 ./scripts/launch_isaac_sim_rviz.sh
 ```
 
-## Step 3: Navigate
+## Step 5: Navigate
 
 In RViz:
 1. Click **2D Pose Estimate** → Set robot's initial position
