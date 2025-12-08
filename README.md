@@ -427,15 +427,9 @@ export ROS_DOMAIN_ID=42
 ros2 launch ogre_policy_controller policy_controller.launch.py use_sim_time:=true
 ```
 
-**Step 4: Launch RViz (new terminal)**
+**Step 4: Navigate in RViz**
 
-```bash
-cd ~/ros2_ws/src/ogre-slam
-export ROS_DOMAIN_ID=42
-./scripts/launch_isaac_sim_rviz.sh
-```
-
-Then in RViz:
+RViz launches automatically with the navigation stack. In RViz:
 1. Click **2D Pose Estimate** and set robot's initial position on the map
 2. Click **Nav2 Goal** and click a destination
 3. Robot navigates autonomously

@@ -30,19 +30,10 @@ conda deactivate
 export ROS_DOMAIN_ID=42
 source ~/ros2_ws/install/setup.bash
 
-ros2 launch ogre_policy_controller policy_controller.launch.py
+ros2 launch ogre_policy_controller policy_controller.launch.py use_sim_time:=true
 ```
 
-## Step 4: Launch RViz
-
-```bash
-export ROS_DOMAIN_ID=42
-source ~/ros2_ws/install/setup.bash
-cd ~/ros2_ws/src/ogre-slam
-./scripts/launch_isaac_sim_rviz.sh
-```
-
-## Step 5: Navigate
+## Step 4: Navigate
 
 In RViz:
 1. Click **2D Pose Estimate** → Set robot's initial position
