@@ -1,5 +1,8 @@
 ogre_policy_controller:
   ros__parameters:
+    # Enable policy-based control (False = pass-through Twist directly)
+    use_policy: true
+
     # Path to trained model (leave empty to auto-find in models/ directory)
     model_path: ""
 
@@ -15,13 +18,13 @@ ogre_policy_controller:
     input_topic: "/cmd_vel_smoothed"
     output_topic: "/joint_command"
 
-    # CRITICAL: action_scale is max wheel velocity in rad/s sent to articulation controller
-    # Must match training config exactly!
-    action_scale: 8.0
+    # action_scale is max wheel velocity in rad/s sent to articulation controller
+    # Higher = faster robot. Max achievable body vel = action_scale × wheel_radius
+    # 12.0 rad/s × 0.04m = 0.48 m/s max body velocity
+    action_scale: 12.0
 
-    # Velocity limits - MUST match training config!
+    # Velocity limits for normalizing /cmd_vel input
     # These are BODY velocities (m/s), not wheel velocities (rad/s)
-    # Max achievable body vel = 8 rad/s × 0.04m = 0.32 m/s
     max_lin_vel: 0.5
     max_ang_vel: 2.0
 

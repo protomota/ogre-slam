@@ -235,20 +235,28 @@ class PolicyControllerNode(Node):
         Observation space (10 dimensions):
             [0-2]: Target velocity (vx, vy, vtheta)
             [3-5]: Current velocity (vx, vy, vtheta)
-            [6-9]: Wheel velocities in TRAINING order [FL, FR, RL, RR]
+            [6-9]: Wheel velocities in TRAINING order [FR, RR, RL, FL]
 
-        Sign corrections match training environment:
-            - FRONT wheels (FL=index 0, FR=index 1) are negated
-            - This converts to normalized space where positive = forward for all wheels
+        self.wheel_vel is in deployment order: [FL, FR, RL, RR] (indices 0,1,2,3)
+        Policy expects training order: [FR, RR, RL, FL] (indices 0,1,2,3)
+        Sign corrections: negate FR and RR (training indices 0,1) to normalize
         """
-        corrected_wheel_vel = self.wheel_vel.copy()
-        corrected_wheel_vel[0] *= -1  # FL (front wheel)
-        corrected_wheel_vel[1] *= -1  # FR (front wheel)
+        # Step 1: Reorder from deployment [FL, FR, RL, RR] to training [FR, RR, RL, FL]
+        training_order_vel = np.array([
+            self.wheel_vel[1],  # FR: deployment[1] -> training[0]
+            self.wheel_vel[3],  # RR: deployment[3] -> training[1]
+            self.wheel_vel[2],  # RL: deployment[2] -> training[2]
+            self.wheel_vel[0],  # FL: deployment[0] -> training[3]
+        ])
+
+        # Step 2: Negate FR and RR (training indices 0,1) to normalize
+        training_order_vel[0] *= -1  # FR (training index 0)
+        training_order_vel[1] *= -1  # RR (training index 1)
 
         obs = np.concatenate([
             self.target_vel,
             self.current_vel,
-            corrected_wheel_vel
+            training_order_vel
         ]).astype(np.float32)
 
         return obs.reshape(1, -1)  # Batch dimension
@@ -379,19 +387,25 @@ class PolicyControllerNode(Node):
         elif self.output_mode == 'joint_state':
             # Publish as JointState for direct joint control in Isaac Sim
             #
-            # Policy outputs wheel velocities in order: [FL, FR, RL, RR] = indices [0, 1, 2, 3]
-            # We send to joints named: [fl_joint, fr_joint, rl_joint, rr_joint] in same order
+            # Policy outputs in training order: [FR, RR, RL, FL] (indices 0,1,2,3)
+            # Isaac Sim expects deployment order: [FL, FR, RL, RR] (indices 0,1,2,3)
             #
-            # NO sign corrections - the Isaac Sim action graph should handle joint orientation
-            # If robot moves wrong direction, the action graph multiply nodes need adjustment
-            corrected_velocities = wheel_velocities.copy()
-            # corrected_velocities[1] *= -1  # FR (right wheel) - DISABLED for testing
-            # corrected_velocities[3] *= -1  # RR (right wheel) - DISABLED for testing
+            # Step 1: Un-normalize by negating FR and RR (training indices 0,1)
+            wheel_velocities[0] *= -1  # FR (training index 0)
+            wheel_velocities[1] *= -1  # RR (training index 1)
+
+            # Step 2: Reorder from training [FR, RR, RL, FL] to deployment [FL, FR, RL, RR]
+            deployment_order_vel = np.array([
+                wheel_velocities[3],  # FL: training[3] -> deployment[0]
+                wheel_velocities[0],  # FR: training[0] -> deployment[1]
+                wheel_velocities[2],  # RL: training[2] -> deployment[2]
+                wheel_velocities[1],  # RR: training[1] -> deployment[3]
+            ])
 
             msg = JointState()
             msg.header.stamp = self.get_clock().now().to_msg()
             msg.name = list(self.wheel_joint_names)  # [fl_joint, fr_joint, rl_joint, rr_joint]
-            msg.velocity = corrected_velocities.tolist()
+            msg.velocity = deployment_order_vel.tolist()
             msg.position = []  # Not used
             msg.effort = []  # Not used
             self.output_pub.publish(msg)
