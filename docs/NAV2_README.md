@@ -61,7 +61,7 @@ cd ~/ros2_ws && source install/setup.bash
 ros2 launch ogre_slam mapping.launch.py
 ```
 
-Drive around the area manually (web interface at http://10.21.21.45:8080) and save the map:
+Drive around the area manually (web interface at http://<ROBOT_IP>:8080) and save the map:
 
 ```bash
 ros2 run nav2_map_server map_saver_cli -f ~/ros2_ws/src/ogre-slam/maps/my_map
@@ -106,7 +106,7 @@ This launches:
    - Colored costmap = obstacles (red = blocked, blue = free)
 
 4. **Manual Override**:
-   - Web interface always available at http://10.21.21.45:8080
+   - Web interface always available at http://<ROBOT_IP>:8080
    - Press SPACEBAR to emergency stop
    - Manual commands override autonomous navigation
 
@@ -358,7 +358,7 @@ ros2 launch ogre_slam navigation.launch.py \
 ```
 
 Navigate using:
-- **Web interface**: http://10.21.21.45:8080 (manual control)
+- **Web interface**: http://<ROBOT_IP>:8080 (manual control)
 - **Command line**: Send goals via ROS2 topics
 - **Remote RViz**: Run RViz on another computer (see below)
 
@@ -422,7 +422,7 @@ ros2 launch ogre_slam navigation.launch.py \
 While possible, X11 forwarding over SSH is very slow for RViz:
 
 ```bash
-ssh -X jetson@10.21.21.45
+ssh -X jetson@<ROBOT_IP>
 ros2 launch ogre_slam navigation.launch.py map:=~/maps/my_map.yaml
 ```
 
@@ -615,7 +615,7 @@ ros2 run ros2_benchmark benchmark_runner
 
 ---
 
-**Robot IP**: 10.21.21.45
+**Robot IP**: <ROBOT_IP>
 **ROS2 Distro**: Humble
 **Platform**: Jetson Orin Nano
 **Date**: November 2025

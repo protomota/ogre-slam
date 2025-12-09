@@ -8,7 +8,7 @@ This is a ROS2 Humble package for SLAM mapping and autonomous navigation on a Je
 
 **Robot Platform:** Project Ogre mecanum drive
 **Hardware:** Jetson Orin Nano, RPLIDAR A1, RealSense D435, 25GA-370 motors with 2 PPR Hall sensors
-**Network:** Robot IP is 10.21.21.45, ROS_DOMAIN_ID=42
+**Network:** Robot IP is <ROBOT_IP>, ROS_DOMAIN_ID=42
 
 ## Common Commands
 
@@ -262,7 +262,7 @@ where L = (wheelbase + trackwidth) / 2. Incorrect wheel dimensions will cause ro
 **This package is standalone** - it declares all its own dependencies and can run independently.
 
 **Optional integration with:**
-- **ogre_teleop**: Web-based manual control (http://10.21.21.45:8080). Can be launched alongside for manual override and emergency stop.
+- **ogre_teleop**: Web-based manual control (http://<ROBOT_IP>:8080). Can be launched alongside for manual override and emergency stop.
 - **rplidar_ros**: LIDAR driver (separate package, launched via IncludeLaunchDescription)
 - **realsense2_camera**: RealSense driver (separate package, launched for navigation only)
 - **Motor control**: Any ROS2-compatible motor controller that subscribes to `/cmd_vel` and provides encoder data
@@ -292,7 +292,7 @@ Monitor performance with `tegrastats`. Expected usage: 40-60% CPU, 1-3GB RAM dur
 
 ### Creating Maps for Different Areas
 1. Launch `./scripts/launch_mapping_session.sh`
-2. Drive slowly using web teleop (http://10.21.21.45:8080)
+2. Drive slowly using web teleop (http://<ROBOT_IP>:8080)
 3. Ensure loop closure by returning to start
 4. Save map: `ros2 run nav2_map_server map_saver_cli -f ~/ros2_ws/src/ogre-slam/maps/<area_name>`
 5. Use in navigation: `ros2 launch ogre_slam navigation.launch.py map:=~/ros2_ws/src/ogre-slam/maps/<area_name>.yaml`
@@ -729,3 +729,4 @@ ros2 topic echo /joint_command
 - **Velocities > 8 rad/s:** Missing exceed-limit penalty in training
 - **Wrong direction:** Sign corrections not matching between training and deployment
 - **Asymmetric wheel speeds:** Check wheel order matches between training and controller
+- don't ever start training, give me the command to start

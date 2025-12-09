@@ -87,6 +87,6 @@ ros2 run tf2_tools view_frames  # Creates frames.pdf
 ## Network Setup
 
 ```bash
-# Robot IP: 10.21.21.45
+# Robot IP: <ROBOT_IP>
 export ROS_DOMAIN_ID=42
 ```

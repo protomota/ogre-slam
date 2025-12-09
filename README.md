@@ -179,10 +179,10 @@ Build maps using Isaac Sim simulation first, then deploy to the real robot.
 
 | Aspect | Host Computer (Isaac Sim) | Jetson (Real Robot) |
 |--------|---------------------------|---------------------|
-| **Where** | Your development computer | Robot (10.21.21.45) |
+| **Where** | Your development computer | Robot (Jetson) |
 | **Hardware** | Simulated sensors | Real RPLIDAR + encoders |
 | **Launch Command** | `ros2 launch ogre_slam mapping.launch.py` with sim flags | `./scripts/launch_mapping_session.sh` |
-| **Teleop** | ROS2 keyboard teleop | Web interface (http://10.21.21.45:8080) |
+| **Teleop** | ROS2 keyboard teleop | Web interface (http://<ROBOT_IP>:8080) |
 | **Odometry** | From Isaac Sim (`use_sim_time:=true`) | Encoder-based (default) |
 | **ROS_DOMAIN_ID** | 42 | 42 |
 
@@ -287,7 +287,7 @@ eog ~/ros2_ws/src/ogre-slam/maps/isaac_sim_map.pgm
 ### Mapping on Real Robot (Jetson)
 
 **Prerequisites:**
-- Robot powered on and connected to network (10.21.21.45)
+- Robot powered on and connected to network (<ROBOT_IP>)
 - RPLIDAR connected and powered
 - Encoders wired to GPIO pins
 - ogre_teleop package installed
@@ -312,7 +312,7 @@ This launches:
 
 Open browser on any device on the network:
 ```
-http://10.21.21.45:8080
+http://<ROBOT_IP>:8080
 ```
 
 Drive slowly around the area:
@@ -357,7 +357,7 @@ eog ~/ros2_ws/src/ogre-slam/maps/my_map.pgm
    ```
 
 This will:
-- Check ROS2 connection to robot (10.21.21.45)
+- Check ROS2 connection to robot (<ROBOT_IP>)
 - Set correct ROS_DOMAIN_ID (42)
 - Create pre-configured RViz setup with:
   - LaserScan visualization (`/scan`)
@@ -451,7 +451,7 @@ This launches:
 1. In RViz, click "2D Pose Estimate" and set robot's initial position
 2. Click "Nav2 Goal" button and click destination on map
 3. Robot autonomously navigates, avoiding obstacles with depth camera
-4. Manual override available at `http://10.21.21.45:8080` (Jetson only)
+4. Manual override available at `http://<ROBOT_IP>:8080` (Jetson only)
 
 **📖 Full documentation:** See [NAV2_README.md](docs/NAV2_README.md) for complete guide
 
@@ -658,227 +658,6 @@ odom (from Isaac Sim)
       └─ camera_link → camera_depth (optical frame)
 ```
 
-## Troubleshooting
-
-### Odometry Not Working
-
-**Problem:** No /odom topic or encoder errors
-
-**Common Misconception:** "odometry_node conflicts with motor_control_node on GPIO"
-- **FALSE!** There is NO GPIO conflict
-- motor_control_node uses I2C (PCA9685) for PWM control
-- odometry_node uses GPIO pins (7,11,13,15,29,31,32,33) for encoders
-- Both can run simultaneously without issues
-
-**Solutions:**
-1. Check GPIO permissions:
-   ```bash
-   sudo usermod -a -G gpio $USER
-   # Log out and back in
-   ```
-
-2. If you see "Device or resource busy" error:
-   - Previous instance didn't clean up GPIO
-   - Solution: Restart the Jetson or manually cleanup:
-   ```bash
-   # Kill all Python processes using GPIO
-   pkill -9 python3
-   # Wait a moment, then restart SLAM
-   ```
-
-3. Verify encoder connections:
-   ```bash
-   # Test encoder reader
-   cd ~/ros2_ws/src/ogre-slam
-   python3 ogre_slam/encoder_reader.py
-   # Rotate wheels manually, should see counts
-   ```
-
-4. Check logs:
-   ```bash
-   ros2 topic echo /encoder_ticks
-   # Should show non-zero values when wheels turn
-   ```
-
-### SLAM Not Building Map / Map Not Updating
-
-**Problem:** Map stays empty or frozen in RViz, doesn't update when robot moves
-
-**Root Cause:** This was a critical issue caused by incorrect gear_ratio and/or using dummy odometry that always reported (0,0,0). slam_toolbox requires meaningful odometry changes to trigger scan processing, even in scan-matching mode.
-
-**Solution:**
-1. **Use real encoder odometry** (NOT dummy odometry)
-   - Ensure `use_odometry: true` in launch file
-   - Verify `/odom` topic shows changing position when driving
-
-2. **Calibrate gear_ratio correctly** (see Gear Ratio Calibration section)
-   - Incorrect gear_ratio causes massive position errors
-   - SLAM won't process scans if odometry shows unrealistic movement
-   - For 25GA-370 motors: use gear_ratio=224.0
-
-3. **Set SLAM thresholds to 0.0** to process scans based on time only:
-   ```yaml
-   # In slam_toolbox_params.yaml
-   minimum_travel_distance: 0.0
-   minimum_travel_heading: 0.0
-   ```
-
-**Quick Checks:**
-1. **LIDAR working?**
-   ```bash
-   ros2 topic hz /scan
-   # Should show ~7-8 Hz for RPLIDAR A1
-   ```
-
-2. **Odometry accurate?**
-   ```bash
-   ros2 topic echo /odom --once | grep -A 3 "position"
-   # Drive 1m forward, x should be ~1.0m (not 100m or 0.01m!)
-   ```
-
-3. **TF tree complete?**
-   ```bash
-   ros2 run tf2_ros tf2_echo map base_link
-   # Should show transform without errors
-   ```
-
-4. **Map being published?**
-   ```bash
-   ros2 topic hz /map
-   # Should show ~0.5 Hz (updates every 2 seconds)
-   ```
-
-### Map Quality Poor
-
-**Tips for better maps:**
-1. **Drive slowly** - Give SLAM time to process
-2. **Good lighting** - Helps if using visual SLAM (future)
-3. **Loop closures** - Return to starting point
-4. **Avoid slippage** - Mecanum wheels can slip on smooth floors
-5. **Multiple passes** - Drive same area from different angles
-
-### High Odometry Drift
-
-**Problem:** Position estimate drifts quickly
-
-**Causes:**
-- 2 PPR encoders are very coarse
-- Mecanum wheel slippage
-- Incorrect wheel dimensions in config
-
-**Solutions:**
-1. **Verify measurements** in `odometry_params.yaml`
-2. **Add IMU** (highly recommended for production)
-3. **Tune EKF** covariance in `ekf_params.yaml`
-4. **Use SLAM localization** (fuses laser with odometry)
-
-### RViz Shows No Data
-
-1. **Check Fixed Frame:**
-   - Should be `map` for mapping mode
-   - Change in Global Options
-
-2. **Add displays:**
-   - LaserScan → `/scan`
-   - Map → `/map`
-   - TF → (check this to see frames)
-
-3. **Check topic connections:**
-   ```bash
-   ros2 topic list
-   # Should see /scan, /odom, /map
-   ```
-
-### Isaac Sim Physics Troubleshooting
-
-If your robot exhibits bouncing, flipping, or unstable behavior in Isaac Sim, this is commonly due to physics configuration issues. Here are the primary causes and solutions:
-
-#### Common Causes of Physics Instability
-
-**1. Collider Misconfiguration (MOST COMMON)**
-- Mecanum wheels require precise collision geometry
-- Overlapping colliders (wheels with body/ground/each other) cause instability
-- Complex mesh collisions (with roller details) overwhelm the physics solver
-
-**Solution:**
-- Enable collision visualization: **View → Show by Type → Physics → Colliders**
-- Check for RED overlaps at rest - there should be minimal intrusion
-- Use simple collision approximations: **Property → Physics → Collision → Approximation: "boundingCube"**
-- Disable collision on passive rollers (keep only main wheel hub collision)
-
-**2. Improper Mass/Inertia Settings**
-- Unrealistic or unbalanced mass causes abnormal dynamics
-- Auto-computed inertia from complex geometry can be incorrect
-
-**Solution:**
-- Verify realistic masses: Robot base ~3.5kg, wheels ~0.1kg each
-- Check: **Property → Physics → Rigid Body → Mass**
-- Ensure inertia tensors are computed from actual geometry (not default values)
-
-**3. Excessive Maximum Velocity (CRITICAL - COMMON ISSUE)**
-- Default Maximum Velocity on RevoluteJoints is often 1000000 (1 million!)
-- This allows wheels to spin out of control, causing physics chaos and instability
-- **This is the most common cause of Isaac Sim mecanum wheel bouncing**
-- Too low Maximum Velocity prevents proper mecanum wheel slip behavior
-
-**Solution:**
-- For each wheel RevoluteJoint: **Property → Physics → Revolute Joint → Drive → Angular**
-  - **Maximum Velocity:** **10000** (NOT 1000000!) - This is the critical fix!
-    - Allows proper mecanum wheel slip while maintaining stability
-    - Too low (e.g., 100) prevents wheels from slipping correctly
-  - **Damping:** 1.0-10.0 (NOT 0!)
-  - **Stiffness:** 0
-  - **Max Force:** 100-1000 (tune for stability)
-
-**4. Insufficient Joint Damping**
-- Missing or low damping on wheel joints causes oscillations
-- Too high stiffness can cause divergence
-
-**Solution:**
-- Apply damping values as listed above (1.0-10.0)
-
-**5. Poor Friction Parameters**
-- Mecanum wheels need balanced lateral and longitudinal friction
-- Mismatched coefficients cause force buildup and "popping"
-
-**Solution:**
-- Wheels: **Property → Physics → Physics Material**
-  - **Static Friction:** 0.8-1.0
-  - **Dynamic Friction:** 0.6-0.8
-- Ground plane: Match or slightly lower friction values
-
-**6. Physics Timestep Issues**
-- Too large timestep makes contacts unstable
-- Insufficient solver iterations can't handle articulated complexity
-
-**Solution:**
-- Select `/physicsScene`: **Property → Physics Scene**
-  - **Position Iteration Count:** 8 (default: 4)
-  - **Velocity Iteration Count:** 2 (default: 1)
-  - **Time Steps Per Second:** 120+ (smaller timestep = more stable)
-  - **Enable CCD:** True (Continuous Collision Detection)
-
-#### Diagnostic Steps
-
-1. **Check Maximum Velocity (FIX THIS FIRST!):** Verify all wheel joints have Maximum Velocity = 10000 (NOT 1000000)
-2. **Check for overlaps:** Enable collision visualization and look for red overlaps
-3. **Increase damping:** Set joint damping to 5-10 if currently low/zero
-4. **Simplify collision:** Use boundingCube approximation on wheels, disable roller collision
-5. **Verify masses:** Check all rigid bodies have realistic mass values
-6. **Increase solver quality:** Set position iterations to 8, velocity to 2
-
-#### Quick Fix Checklist
-
-- ✅ **MOST IMPORTANT:** Wheel joints Maximum Velocity set to **10000** (NOT 1000000!)
-  - Allows proper mecanum wheel slip while maintaining stability
-- ✅ Wheel joints have damping ≥ 1.0
-- ✅ No red collision overlaps visible at rest
-- ✅ Wheel collision approximation set to "boundingCube" or "boundingSphere"
-- ✅ All 28 passive rollers have collision disabled
-- ✅ Physics scene position iterations ≥ 8
-- ✅ Wheels not penetrating ground (Z position = wheel radius + 5-10mm clearance)
-
-**Reference:** [NVIDIA Isaac Sim Forum - Mecanum Wheel Physics](https://forums.developer.nvidia.com/t/351181)
 
 ## Performance Tuning
 
@@ -1109,15 +888,231 @@ Nav2 Planner → /cmd_vel → Policy Controller → /joint_command → Isaac Sim
 For policy training instructions, see [ogre-lab](https://github.com/protomota/ogre-lab).
 For implementation details, see [CLAUDE.md](CLAUDE.md#rl-policy-training-isaac-lab).
 
+## Troubleshooting
+
+### Odometry Not Working
+
+**Problem:** No /odom topic or encoder errors
+
+**Common Misconception:** "odometry_node conflicts with motor_control_node on GPIO"
+- **FALSE!** There is NO GPIO conflict
+- motor_control_node uses I2C (PCA9685) for PWM control
+- odometry_node uses GPIO pins (7,11,13,15,29,31,32,33) for encoders
+- Both can run simultaneously without issues
+
+**Solutions:**
+1. Check GPIO permissions:
+   ```bash
+   sudo usermod -a -G gpio $USER
+   # Log out and back in
+   ```
+
+2. If you see "Device or resource busy" error:
+   - Previous instance didn't clean up GPIO
+   - Solution: Restart the Jetson or manually cleanup:
+   ```bash
+   # Kill all Python processes using GPIO
+   pkill -9 python3
+   # Wait a moment, then restart SLAM
+   ```
+
+3. Verify encoder connections:
+   ```bash
+   # Test encoder reader
+   cd ~/ros2_ws/src/ogre-slam
+   python3 ogre_slam/encoder_reader.py
+   # Rotate wheels manually, should see counts
+   ```
+
+4. Check logs:
+   ```bash
+   ros2 topic echo /encoder_ticks
+   # Should show non-zero values when wheels turn
+   ```
+
+### SLAM Not Building Map / Map Not Updating
+
+**Problem:** Map stays empty or frozen in RViz, doesn't update when robot moves
+
+**Root Cause:** This was a critical issue caused by incorrect gear_ratio and/or using dummy odometry that always reported (0,0,0). slam_toolbox requires meaningful odometry changes to trigger scan processing, even in scan-matching mode.
+
+**Solution:**
+1. **Use real encoder odometry** (NOT dummy odometry)
+   - Ensure `use_odometry: true` in launch file
+   - Verify `/odom` topic shows changing position when driving
+
+2. **Calibrate gear_ratio correctly** (see Gear Ratio Calibration section)
+   - Incorrect gear_ratio causes massive position errors
+   - SLAM won't process scans if odometry shows unrealistic movement
+   - For 25GA-370 motors: use gear_ratio=224.0
+
+3. **Set SLAM thresholds to 0.0** to process scans based on time only:
+   ```yaml
+   # In slam_toolbox_params.yaml
+   minimum_travel_distance: 0.0
+   minimum_travel_heading: 0.0
+   ```
+
+**Quick Checks:**
+1. **LIDAR working?**
+   ```bash
+   ros2 topic hz /scan
+   # Should show ~7-8 Hz for RPLIDAR A1
+   ```
+
+2. **Odometry accurate?**
+   ```bash
+   ros2 topic echo /odom --once | grep -A 3 "position"
+   # Drive 1m forward, x should be ~1.0m (not 100m or 0.01m!)
+   ```
+
+3. **TF tree complete?**
+   ```bash
+   ros2 run tf2_ros tf2_echo map base_link
+   # Should show transform without errors
+   ```
+
+4. **Map being published?**
+   ```bash
+   ros2 topic hz /map
+   # Should show ~0.5 Hz (updates every 2 seconds)
+   ```
+
+### Map Quality Poor
+
+**Tips for better maps:**
+1. **Drive slowly** - Give SLAM time to process
+2. **Good lighting** - Helps if using visual SLAM (future)
+3. **Loop closures** - Return to starting point
+4. **Avoid slippage** - Mecanum wheels can slip on smooth floors
+5. **Multiple passes** - Drive same area from different angles
+
+### High Odometry Drift
+
+**Problem:** Position estimate drifts quickly
+
+**Causes:**
+- 2 PPR encoders are very coarse
+- Mecanum wheel slippage
+- Incorrect wheel dimensions in config
+
+**Solutions:**
+1. **Verify measurements** in `odometry_params.yaml`
+2. **Add IMU** (highly recommended for production)
+3. **Tune EKF** covariance in `ekf_params.yaml`
+4. **Use SLAM localization** (fuses laser with odometry)
+
+### RViz Shows No Data
+
+1. **Check Fixed Frame:**
+   - Should be `map` for mapping mode
+   - Change in Global Options
+
+2. **Add displays:**
+   - LaserScan → `/scan`
+   - Map → `/map`
+   - TF → (check this to see frames)
+
+3. **Check topic connections:**
+   ```bash
+   ros2 topic list
+   # Should see /scan, /odom, /map
+   ```
+
+### Isaac Sim Physics Troubleshooting
+
+If your robot exhibits bouncing, flipping, or unstable behavior in Isaac Sim, this is commonly due to physics configuration issues. Here are the primary causes and solutions:
+
+#### Common Causes of Physics Instability
+
+**1. Collider Misconfiguration (MOST COMMON)**
+- Mecanum wheels require precise collision geometry
+- Overlapping colliders (wheels with body/ground/each other) cause instability
+- Complex mesh collisions (with roller details) overwhelm the physics solver
+
+**Solution:**
+- Enable collision visualization: **View → Show by Type → Physics → Colliders**
+- Check for RED overlaps at rest - there should be minimal intrusion
+- Use simple collision approximations: **Property → Physics → Collision → Approximation: "boundingCube"**
+- Disable collision on passive rollers (keep only main wheel hub collision)
+
+**2. Improper Mass/Inertia Settings**
+- Unrealistic or unbalanced mass causes abnormal dynamics
+- Auto-computed inertia from complex geometry can be incorrect
+
+**Solution:**
+- Verify realistic masses: Robot base ~3.5kg, wheels ~0.1kg each
+- Check: **Property → Physics → Rigid Body → Mass**
+- Ensure inertia tensors are computed from actual geometry (not default values)
+
+**3. Excessive Maximum Velocity (CRITICAL - COMMON ISSUE)**
+- Default Maximum Velocity on RevoluteJoints is often 1000000 (1 million!)
+- This allows wheels to spin out of control, causing physics chaos and instability
+- **This is the most common cause of Isaac Sim mecanum wheel bouncing**
+- Too low Maximum Velocity prevents proper mecanum wheel slip behavior
+
+**Solution:**
+- For each wheel RevoluteJoint: **Property → Physics → Revolute Joint → Drive → Angular**
+  - **Maximum Velocity:** **10000** (NOT 1000000!) - This is the critical fix!
+    - Allows proper mecanum wheel slip while maintaining stability
+    - Too low (e.g., 100) prevents wheels from slipping correctly
+  - **Damping:** 1.0-10.0 (NOT 0!)
+  - **Stiffness:** 0
+  - **Max Force:** 100-1000 (tune for stability)
+
+**4. Insufficient Joint Damping**
+- Missing or low damping on wheel joints causes oscillations
+- Too high stiffness can cause divergence
+
+**Solution:**
+- Apply damping values as listed above (1.0-10.0)
+
+**5. Poor Friction Parameters**
+- Mecanum wheels need balanced lateral and longitudinal friction
+- Mismatched coefficients cause force buildup and "popping"
+
+**Solution:**
+- Wheels: **Property → Physics → Physics Material**
+  - **Static Friction:** 0.8-1.0
+  - **Dynamic Friction:** 0.6-0.8
+- Ground plane: Match or slightly lower friction values
+
+**6. Physics Timestep Issues**
+- Too large timestep makes contacts unstable
+- Insufficient solver iterations can't handle articulated complexity
+
+**Solution:**
+- Select `/physicsScene`: **Property → Physics Scene**
+  - **Position Iteration Count:** 8 (default: 4)
+  - **Velocity Iteration Count:** 2 (default: 1)
+  - **Time Steps Per Second:** 120+ (smaller timestep = more stable)
+  - **Enable CCD:** True (Continuous Collision Detection)
+
+#### Diagnostic Steps
+
+1. **Check Maximum Velocity (FIX THIS FIRST!):** Verify all wheel joints have Maximum Velocity = 10000 (NOT 1000000)
+2. **Check for overlaps:** Enable collision visualization and look for red overlaps
+3. **Increase damping:** Set joint damping to 5-10 if currently low/zero
+4. **Simplify collision:** Use boundingCube approximation on wheels, disable roller collision
+5. **Verify masses:** Check all rigid bodies have realistic mass values
+6. **Increase solver quality:** Set position iterations to 8, velocity to 2
+
+#### Quick Fix Checklist
+
+- ✅ **MOST IMPORTANT:** Wheel joints Maximum Velocity set to **10000** (NOT 1000000!)
+  - Allows proper mecanum wheel slip while maintaining stability
+- ✅ Wheel joints have damping ≥ 1.0
+- ✅ No red collision overlaps visible at rest
+- ✅ Wheel collision approximation set to "boundingCube" or "boundingSphere"
+- ✅ All 28 passive rollers have collision disabled
+- ✅ Physics scene position iterations ≥ 8
+- ✅ Wheels not penetrating ground (Z position = wheel radius + 5-10mm clearance)
+
+**Reference:** [NVIDIA Isaac Sim Forum - Mecanum Wheel Physics](https://forums.developer.nvidia.com/t/351181)
+
 ## Acknowledgments
 
 - **slam_toolbox**: Steve Macenski
 - **robot_localization**: Tom Moore
 - **RPLIDAR ROS**: SLAMTEC
 - **Isaac Lab**: NVIDIA (for RL training framework)
-
----
-
-**Robot IP:** 10.21.21.45
-**ROS2 Distro:** Humble
-**Platform:** Jetson Orin Nano

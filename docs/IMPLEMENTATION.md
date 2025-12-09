@@ -661,7 +661,7 @@ ros2 topic echo /joint_command
    ```
 
 2. **Drive manually:**
-   - Open: `http://10.21.21.45:8080`
+   - Open: `http://<ROBOT_IP>:8080`
    - Drive slowly and systematically
    - Return to start for loop closure
 
@@ -1061,7 +1061,7 @@ cd ~/ros2_ws/src/ogre-slam
 🎉 Mapping session ready!
 
 🌐 Web Interface:
-  http://10.21.21.45:8080
+  http://<ROBOT_IP>:8080
 ```
 
 **Terminal 2 - Monitor topics:**
@@ -1071,7 +1071,7 @@ ros2 topic hz /odom /scan /map
 ```
 
 **In Web Browser:**
-1. Open: `http://10.21.21.45:8080`
+1. Open: `http://<ROBOT_IP>:8080`
 2. Use WASD or arrow keys to drive
 3. Start with LOW speed (20-40%)
 4. Drive slowly in small area

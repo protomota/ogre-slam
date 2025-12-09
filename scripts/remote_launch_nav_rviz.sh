@@ -5,7 +5,7 @@
 set -e
 
 echo "=== Navigation RViz Remote Launcher ==="
-echo "Connecting to robot at 10.21.21.45..."
+echo "Connecting to robot at <ROBOT_IP>..."
 echo ""
 
 # Source ROS2
