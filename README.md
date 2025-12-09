@@ -1024,22 +1024,22 @@ ros2 launch ogre_policy_controller policy_controller.launch.py
 export ROS_DOMAIN_ID=42
 
 # Test forward motion (0.3 m/s - max trained linear velocity)
-ros2 topic pub /cmd_vel geometry_msgs/msg/Twist \
+ros2 topic pub /cmd_vel_smoothed geometry_msgs/msg/Twist \
     "{linear: {x: 0.3, y: 0.0, z: 0.0}, angular: {x: 0.0, y: 0.0, z: 0.0}}" -r 10
 
 # Test strafe left (0.3 m/s)
-ros2 topic pub /cmd_vel geometry_msgs/msg/Twist \
+ros2 topic pub /cmd_vel_smoothed geometry_msgs/msg/Twist \
     "{linear: {x: 0.0, y: 0.3, z: 0.0}, angular: {x: 0.0, y: 0.0, z: 0.0}}" -r 10
 
 # Test rotation (1.0 rad/s - max trained angular velocity)
-ros2 topic pub /cmd_vel geometry_msgs/msg/Twist \
+ros2 topic pub /cmd_vel_smoothed geometry_msgs/msg/Twist \
     "{linear: {x: 0.0, y: 0.0, z: 0.0}, angular: {x: 0.0, y: 0.0, z: 1.0}}" -r 10
 ```
 
 **Terminal 4: Monitor Output (Optional)**
 ```bash
 export ROS_DOMAIN_ID=42
-ros2 topic echo /cmd_vel
+ros2 topic echo /joint_command
 ```
 
 #### Running with Nav2 and RViz
