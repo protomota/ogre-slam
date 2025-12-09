@@ -126,7 +126,7 @@ controller_server:
       critics: ["RotateToGoal", "Oscillation", "ObstacleFootprint", "GoalAlign", "PathAlign", "PathDist", "GoalDist"]
       # ObstacleFootprint: Better than BaseObstacle - checks full robot footprint
       # Scale must be HIGH to reject trajectories near obstacles
-      ObstacleFootprint.scale: 1.0
+      ObstacleFootprint.scale: 32.0
       ObstacleFootprint.sum_scores: false
       # PathAlign: Align robot heading with path direction
       PathAlign.scale: 24.0
@@ -161,12 +161,11 @@ local_costmap:
       inflation_layer:
         plugin: "nav2_costmap_2d::InflationLayer"
         # cost_scaling_factor: How quickly cost drops off from obstacles
-        # Lower = costs stay high further = more cautious near walls
+        # Lower = costs stay high further from obstacles = more cautious
         cost_scaling_factor: 1.5
         # inflation_radius: How far from obstacles to inflate costs
-        # robot_radius (0.20) + clearance (0.40) = 0.60m
-        # Must be large enough to prevent corner collisions
-        inflation_radius: 0.60
+        # robot_radius (0.20) + clearance (0.35) = 0.55m
+        inflation_radius: 0.55
       voxel_layer:
         plugin: "nav2_costmap_2d::VoxelLayer"
         enabled: True
@@ -247,12 +246,11 @@ global_costmap:
       inflation_layer:
         plugin: "nav2_costmap_2d::InflationLayer"
         # cost_scaling_factor: How quickly cost drops off from obstacles
-        # Lower = costs stay high further = more cautious near walls
+        # Lower = costs stay high further from obstacles = more cautious
         cost_scaling_factor: 1.5
         # inflation_radius: How far from obstacles to inflate costs
-        # robot_radius (0.20) + clearance (0.40) = 0.60m
-        # Must be large enough to prevent corner collisions
-        inflation_radius: 0.60
+        # robot_radius (0.20) + clearance (0.35) = 0.55m
+        inflation_radius: 0.55
       always_send_full_costmap: True
 
 map_server:
